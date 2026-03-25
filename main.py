@@ -24,9 +24,16 @@ class login(BaseModel):
   username: str
   password: str
 
-class register(BaseModel):
-  username: str
-  password: str
+
+class transferDetail(BaseModel):
+  recepient: str
+  amount: int          # inter team transaction, amount restricted to be integers
+
+class game(BaseModel):
+  amount: int          # only integer bet amounts allowed
+
+
+  
 
 
 #------------------ Internal helper function ---------------------------#
@@ -36,7 +43,7 @@ def _redirect_login():
   
 
 #------------------------ middleware ----------------------------#
-protected = ["/home", "/pay", "/payees"]
+protected = ["/home", "/pay", "/payees", "/play", "/transfer", "/table"]
 
 
 @app.middleware("http")
@@ -49,7 +56,7 @@ async def validate_request(request: Request, call_next):
       request.state.session_token = session_token
       return response
     else:
-      raise InvalidSession
+      raise InvalidSession()
   else:
     response = await call_next(request)
   
@@ -60,12 +67,20 @@ async def validate_request(request: Request, call_next):
 class InvalidSession(Exception):
   pass
 
+class payee_list_unobtainable(Exception):
+  pass
+
 
 #----------------------Custom Exception Handling -----------------------#
 
 @app.exception_handler(InvalidSession)
 async def validation_exception_handler(request: Request):
     return pages.TemplateResponse("error.html", {"message":" invalid session, kindly login"})
+
+@app.exception_handler(payee_list_ubobtainable)
+async def validation_exception_handler(request: Request):
+    return pages.TemplateResponse("error.html", {"message":" could not obtain payee list"})
+
 
 #----------------------- GET endpoints --------------------#
 
@@ -77,11 +92,6 @@ async def landing(request: Request):
 @app.get("/login")
 async def login(request: Request):
     return pages.TemplateResponse("login.html", {"request": request})
-
-
-@app.get("/register")
-async def register(request: Request):
-    return pages.TemplateResponse("register.html", {"request": request})
 
 
 @app.get("/home")
@@ -104,9 +114,56 @@ async def get_user_landing(request: Request):
   )
 
 
+@app.get("/pay")
+async def payment(request: Request, to: str = None):
+    return pages.TemplateResponse(
+        "pay.html", {"request": request, "recipient": to}
+    )
+
+
+@app.get("/payees")
+async def payees(request: Request):
+  session_token = request.state.session_token
+  status, payee_list = await DB_Handler.get_payees(session_token)
+  if not status:
+      raise payee_list_unobtainable()
+  return pages.TemplateResponse(
+      "payees.html", {"request": request, "payees": payee_list}
+  )
+
+
+@app.get("/logout")
+async def logout(request: Request):
+    session_token = request.state.session_token
+    if session_id:
+        await DB_Handler.delete_session_id(session_token)
+    response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie("session_token")
+    return response
 
 
 
+@app.get("/play")
+
+
+@app.get("/availability")
+
+
+@app.get("/table")
+
+@app.get("/queue")
+
+
+#------------------------ POST endpoints ----------------------#
+@app.post("/login")
+async def login_post(creds: login, response: Response):
+
+
+@app.post("/transfer")
+async def transfer_post(details: transferDetail, response: Response):
+
+@app.post("/game)
+async def play_post(details: game, response: Response):
 
 
 
