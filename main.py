@@ -91,7 +91,7 @@ class invalidLoginCreds(Exception):
 def validation_exception_handler(request: Request):
     return pages.TemplateResponse("error.html", {"request": request, "message":" invalid session, kindly login"})
 
-@app.exception_handler(payee_list_ubobtainable)
+@app.exception_handler(payee_list_unobtainable)
 def payee_list_exception_handler(request: Request):
     return pages.TemplateResponse("error.html", {"request": request, "message":" could not obtain payee list"})
 
