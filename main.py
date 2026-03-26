@@ -73,7 +73,7 @@ async def validate_request(request: Request, call_next):
 class InvalidSession(Exception):
   pass
 
-class payee_list_unobtainable(Exception):
+class payeeListUnobtainable(Exception):
   pass
 
 class noGamesOrQueue(Exception):
@@ -88,23 +88,23 @@ class invalidLoginCreds(Exception):
 #----------------------Custom Exception Handling -----------------------#
 
 @app.exception_handler(InvalidSession)
-def validation_exception_handler(request: Request):
+def validation_exception_handler(request: Request, exc: Exception):
     return pages.TemplateResponse("error.html", {"request": request, "message":" invalid session, kindly login"})
 
 @app.exception_handler(payee_list_unobtainable)
-def payee_list_exception_handler(request: Request):
+def payee_list_exception_handler(request: Request, exc: Exception):
     return pages.TemplateResponse("error.html", {"request": request, "message":" could not obtain payee list"})
 
 @app.exception_handler(noGamesOrQueue)
-def nogames_exception_handler(request: Request):
+def nogames_exception_handler(request: Request, exc: Exception):
     return pages.TemplateResponse("error.html", {"request": request, "message":" could not obtain list of games or current queue."})
 
 @app.exception_handler(couldNotGetUsernameAvailability)
-def username_availability_exception_handler(request: Request):
+def username_availability_exception_handler(request: Request, exc: Exception):
   return pages.TemplateResponse("error.html", {"request": request, "message":" could not check if username is available."})
 
 @app.exception_handler(invalidLoginCreds)
-def invalid_login_exception_handler(request: Request):
+def invalid_login_exception_handler(request: Request, exc: Exception):
   return pages.TemplateResponse("login.html", {"request": request, "message":" incorrect login credentials"})
 
 #----------------------- GET endpoints --------------------#
