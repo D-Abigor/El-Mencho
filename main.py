@@ -57,7 +57,7 @@ protected = ["/home", "/pay", "/payees", "/play", "/transfer", "/table"]
 async def validate_request(request: Request, call_next):
   session_token = request.cookies.get("session_token")
   if request.url.path in protected:
-    status = await db.validate(token = session_token, "user")
+    status = await db.validate(session_token = session_token, role = "user")
     if status:
       response = await call_next(request)
       request.state.session_token = session_token
