@@ -189,7 +189,7 @@ async def transfer_post(details: transferDetail, response: Response):
   )
 
 
-@app.post("/game)
+@app.post("/game")
 async def play_post(details: game, response: Response):
 
 
