@@ -3,7 +3,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from passlib.hash import bcrypt
-from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability
+from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability, authenticationFailure
 
 load_dotenv()
 
@@ -42,7 +42,7 @@ async def _uuidFromSession(session_token: str) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             """SELECT user_id FROM sessions
-               WHERE session_id = $1 AND expires_at > NOW();""",
+               WHERE session_token = $1 AND expires_at > NOW();""",
             session_token,
         )
         if not row:
@@ -81,8 +81,8 @@ async def validate(session_token: str, role: str) -> bool:
         )
     return bool(row and row["access"] == role)
 
-async def getPayees(session_id: str):
-    source_uuid = await _uuid_from_session(session_id)          # if time allows improve this by comverting to single query using join
+async def getPayees(session_token: str):
+    source_uuid = await _uuid_from_session(session_token)          # if time allows improve this by comverting to single query using join
     teamname = await _getTeamnameFromUuid(source_uuid)
     async with conn_pool.acquire() as conn:
         rows = await conn.fetch(
@@ -112,19 +112,19 @@ async def getSessionToken(username: str, password: str):
             )
             if valid:
                 existing = await conn.fetchrow(
-                    """SELECT session_id FROM sessions
+                    """SELECT session_token FROM sessions
                        WHERE user_id = $1 AND expires_at > NOW();""",
                     row["id"],
                 )
                 if existing:
-                    return existing["session_id"]
+                    return existing["session_token"]
                 new_session = await conn.fetchrow(
                     """INSERT INTO sessions (user_id, expires_at)
                        VALUES ($1, NOW() + INTERVAL '1 day')
-                       RETURNING session_id;""",
+                       RETURNING session_token;""",
                     row["id"],
                 )
-                return new_session["session_id"]
+                return new_session["session_token"]
             else:
                 raise authenticationFailure("Invalid credentials")
         else:
@@ -149,11 +149,13 @@ async def checkUsernameAvailability(username: str):
 
 
 async def getPlayerHome(session_token):
-
+# return affiliated teamname, credits belonging to the user, total team credits, list of transactions and game logs
 
 async def getManagerHome(session_token):
+# return  queue data, players currently playing, player bets, 
 
-    
+async def getQueue(session_token)
+# return json with game name and their current status in q, total q length
 
 
 

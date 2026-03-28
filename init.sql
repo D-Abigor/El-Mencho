@@ -8,7 +8,7 @@ CREATE TABLE users(
 );
 
 CREATE TABLE sessions(
-    session_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_token uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     expires_at TIMESTAMP NOT NULL DEFAULT (now() + INTERVAL '5 hours'),
