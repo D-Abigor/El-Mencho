@@ -83,7 +83,7 @@ def _gameLogstoDescriptive(gamelogs: list[asyncpg.Record]):
         cleanedLogs.append(line)
     return cleanedLogs
     
-def _transactionstoDescriptive(transactionlogs: list([asyncpg.Record]), uuid: str):
+def _transactionstoDescriptive(transactionlogs: list[asyncpg.Record], uuid: str):
     cleanedLogs = []
     for entries in cleanedLogs:
         change = entries["change"]
@@ -96,7 +96,7 @@ def _transactionstoDescriptive(transactionlogs: list([asyncpg.Record]), uuid: st
         cleanedLogs.append(line)
     return cleanedLogs
 
-def _convertQueue(queue: list([asyncpg.Record])):
+def _convertQueue(queue: list[asyncpg.Record]):
     queuecleaned = {}
     index = 1
     for players in queue:
@@ -104,16 +104,19 @@ def _convertQueue(queue: list([asyncpg.Record])):
         index+=1
     return queuecleaned
 
-def _convertActivePlayers(activePlayers: list([asyncpg.Record])):
+def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
     players = {}
     for player in activePlayers:
         players[player.username] = player.bet
     return players
 
-def _cleanUserQueue(activeQueue: list([asyncpg.Record])):
+def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
     queues = {}
     for queue in activeQueue:
         queues[queue["game"]] = queue["position"]
+    for game in ['teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s']:
+        if game not in queues:
+            queues[game] = -1
     return queues 
 
 
@@ -185,6 +188,7 @@ async def deleteSessionToken(session_token: str):
         await conn.execute(
             "DELETE FROM sessions WHERE session_token = $1;", session_token
         )
+
 async def transfer(session_id: str, destination_username: str, amount):
     # valdiating transfer amount
     try:
@@ -280,7 +284,7 @@ async def getPlayerHome(session_token):
         "gamelogs": convertedLogs 
         }
 
-async def getManagerHome(session_token: str, game: str):
+async def getManagerHome(game: str):
 # return  queue data, players currently playing, player bets, 
     async with conn_pool.acquire() as conn:
         queue = conn.fetch(
@@ -315,6 +319,7 @@ async def getUserQueue(session_token):
         )
     cleanedUserQueue = _cleanUserQueue(activeQueues)
     return cleanedUserQueue
+
 
 
 

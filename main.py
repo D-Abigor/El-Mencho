@@ -32,16 +32,6 @@ class transferDetail(BaseModel):
 class game(BaseModel):
   amount: int          # only integer bet amounts allowed
 
-class gameQStatus(BaseModel):
-  in_queue: bool
-  position: int
-  queue_length: int
-
-class username_availability(BaseModel):
-  available: bool
-
-
-
 
 #------------------ Internal helper function ---------------------------#
 
@@ -112,13 +102,15 @@ async def login(request: Request):
 @app.get("/home")
 async def get_user_landing(request: Request):
   session_token = request.state.session_token
-  package = await db.get_user_landing(session_token = session_token)
+  response = await db.getPlayerHome(session_token = session_token)
   return pages.TemplateResponse(
       "userhome.html",
       {
           "request": request,
-          "balance": package["balance"],
-          "transactions": package["transactions"],
+          "teamname": response["teamname"],
+          "teamcredits": response["teamcredits"],
+          "transactions": response["transactions"],
+          "gamelogs": response["gamelogs"]
       },
   )
 
@@ -133,9 +125,9 @@ async def payment(request: Request, to: str = None):
 @app.get("/payees")
 async def payees(request: Request):
   session_token = request.state.session_token
-  payee_list = await db.get_payees(session_token=session_token)
+  payeeList = await db.getPayees(session_token=session_token)
   return pages.TemplateResponse(
-      "payees.html", {"request": request, "payees": payee_list}
+      "payees.html", {"request": request, "payees": payeeList}
   )
 
 
@@ -153,17 +145,36 @@ async def logout(request: Request):
 @app.get("/play")
 async def play(request: Request):
   session_token = request.state.session_token
-  games_and_queue = await db.get_games_and_queue(session_token = session_token)
+  games_and_queue = await db.getUserQueue(session_token = session_token)
   response = pages.TemplateResponse(
-    "play.html", {"request": request, "games_and_queue": games_and_queue}
+    "play.html", 
+    {
+      "request": request,
+      "games_and_queue": games_and_queue,
+
+    }
   )
   return response
 
-
 @app.get("/table")
-async def get_table(request: Request, )
+async def getTables(request: Request, game: str = None):
+  game  = await db.getManagerHome(game)
+  response = pages.TemplateResponse(
+    "table.html",
+    {
+      "request": request,
+      "queue": game["queue"],
+      "players": game["players"]
+    }
+  )
+  
+
 
 @app.get("/queue")
+async def getqueue(request: Request):
+  session_token = request.state.session_token
+  queue = await db.getUserQueue(session_token)
+  return JSONResponse(queue)
 
 
 #------------------------ POST endpoints ----------------------#
