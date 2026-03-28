@@ -331,5 +331,8 @@ async def removeFromQueue(username: str, game: str):
         row = conn.execute("DELETE FROM queue WHERE user_id = $1 AND game = $2 ;", uuid, game)
 
 
+async def insertIntoQueue(session_token: str, game: str):
+
+async def insertIntoGame(session_token: str, game: str):
 
 
