@@ -51,15 +51,13 @@ CREATE TABLE gamePlayers(
   ID SERIAL PRIMARY KEY, 
   gameId UUID NOT NULL,
   user_id UUID NOT NULL,
-  initial_bet INT NOT NULL,
-  final_amount INT NOT NULL CHECK ( final_amount >= 0),
+  initialBet INT NOT NULL,
+  finalAmount INT NOT NULL CHECK ( final_amount >= 0),
   timeOfFinish TIMESTAMP NOT NULL DEFAULT now(),
   CONSTRAINT gameId_fkey FOREIGN KEY (gameId) REFERENCES gamesPlayed(gameId),
   CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id),
   CONSTRAINT finishTime_fkey FOREIGN KEY (timeOfFinish) REFERENCES gamesPlayed(timeOfFinish),
 );
-
-
 
 
 CREATE TABLE queue(

@@ -50,7 +50,7 @@ async def _uuidFromSession(session_token: str) -> str:
         return row["user_id"]
 
 
-async def _getUsernameFromUuid(uuid) -> str:
+async def _getUsernameFromUuid(uuid: str) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT username FROM users WHERE id = $1;", uuid
@@ -59,7 +59,7 @@ async def _getUsernameFromUuid(uuid) -> str:
             raise dbError("Internal db error - could not get corresponding username from uuid")
         return row["username"]
 
-async def _getTeamnameFromUuid(uuid) -> str:
+async def _getTeamnameFromUuid(uuid: str) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT affiliation FROM users WHERE id = $1;", uuid
@@ -67,6 +67,22 @@ async def _getTeamnameFromUuid(uuid) -> str:
         if not row:
             raise dbError("Internal db error - could not get corresponding teamname from uuid")
         return row["affiliation"]
+
+async def _gameLogstoDescriptive(gamelogs: list[asyncpg.Record]):
+    cleanedLogs = []
+    for entries in gamelogs:
+        game = gameLogs["game"]
+        time = gameLogs["timeOfFinish"]
+        creditChange = gameLogs["finalAmount"] - gameLogs["initial_bet"]
+        if creditChange >= 0:
+            creditChange = abs(creditChange)
+            line = f"you played {game} at {time} and won {creditChange}"
+        else:
+            creditChange = abs(creditChange)
+            line = f"you played {game} at {time} and lost {creditChange}"
+        cleanedLogs.append(line)
+    return cleanedLogs
+    
 
 #------------------------ route helper functions ------------------------#
 
@@ -150,6 +166,30 @@ async def checkUsernameAvailability(username: str):
 
 async def getPlayerHome(session_token):
 # return affiliated teamname, credits belonging to the user, total team credits, list of transactions and game logs
+    userid = _getuuid(session_token)
+    async with conn_pool.acquire() as conn:
+        # combine queries into 1 if time allows
+        userDetails = await conn.fetchrow(
+            """SELECT u.affiliation AS teamname, a.balance AS userCredits 
+            FROM users u JOIN accounts a ON u.id = a.user_id 
+            WHERE u.id = $1;""", userid
+        )
+        generalDetails = await conn.fetchrow(
+          """SELECT sum(a.balance) AS teamCredits
+            FROM users u JOIN accounts a ON u.id = a.user_id 
+            WHERE u.affiliation = $1;""", userDetails["teamname"]
+        )
+        gameLogs = await conn.fetch(
+            """"SELECT b.game, b.timeOfFinish, a.initialBet, a.finalAmount 
+            FROM gamePlayers a JOIN gamesPlayed b ON a.gameId = b.gameId 
+            WHERE user_id = $1
+            ORDER BY b.timeOfFinish DESC;""", userid
+        )
+        transactions = await
+    convertedLogs = _gameLogstoDescriptive(gameLogs)
+    return {"teamname": userDetails["teamname"], "userCredits": userDetails["userCredits"],
+    
+    "teamCredits": generalDetails["teamCredits"], "transactions": }
 
 async def getManagerHome(session_token):
 # return  queue data, players currently playing, player bets, 
