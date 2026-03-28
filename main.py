@@ -93,6 +93,10 @@ def username_availability_exception_handler(request: Request, exc: Exception):
 @app.exception_handler(authenticationFailure)
 def username_availability_exception_handler(request: Request, exc: Exception):
   return pages.TemplateResponse("error.html", {"request": request, "message":exc.message})
+
+@app.exception_handler(transactionError)
+def username_availability_exception_handler(request: Request, exc: Exception):
+  return pages.TemplateResponse("error.html", {"request": request, "message":exc.message})
 #----------------------- GET endpoints --------------------#
 
 @app.get("/")
@@ -155,14 +159,6 @@ async def play(request: Request):
   )
   return response
 
-
-
-@app.get("/availability")
-async def play(username: str = None):
-  response = db.checkUsernameAvailability(username=username)
-  return JSONResponse(response)
-  
-  
 
 @app.get("/table")
 async def get_table(request: Request, )

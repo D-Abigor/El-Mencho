@@ -12,3 +12,7 @@ class couldNotGetUsernameAvailability(Exception):
 class authenticationFailure(Exception):
   def __init__(self, message: str):
     self.message = message
+
+class transactionError(Exception):
+  def __init__(self, message: str):
+    self.message = message

@@ -3,7 +3,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from passlib.hash import bcrypt
-from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability, authenticationFailure
+from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability, authenticationFailure, transactionError
 
 load_dotenv()
 
@@ -68,12 +68,12 @@ async def _getTeamnameFromUuid(uuid: str) -> str:
             raise dbError("Internal db error - could not get corresponding teamname from uuid")
         return row["affiliation"]
 
-async def _gameLogstoDescriptive(gamelogs: list[asyncpg.Record]):
+def _gameLogstoDescriptive(gamelogs: list[asyncpg.Record]):
     cleanedLogs = []
     for entries in gamelogs:
-        game = gameLogs["game"]
-        time = gameLogs["timeOfFinish"]
-        creditChange = gameLogs["finalAmount"] - gameLogs["initial_bet"]
+        game = entries["game"]
+        time = entries["timeOfFinish"]
+        creditChange = entries["finalAmount"] - entries["initial_bet"]
         if creditChange >= 0:
             creditChange = abs(creditChange)
             line = f"you played {game} at {time} and won {creditChange}"
@@ -83,6 +83,18 @@ async def _gameLogstoDescriptive(gamelogs: list[asyncpg.Record]):
         cleanedLogs.append(line)
     return cleanedLogs
     
+def _transactionstoDescriptive(transactionlogs: list([asyncpg.Record]), uuid: str):
+    cleanedLogs = []
+    for entries in cleanedLogs:
+        change = entries["change"]
+        source = entries["source"]
+        destination = entries["destination"]
+        if source == uuid:
+            line = f"you sent {destination} {change}"
+        elif destination == uuid:
+            line = f"{source} sent you {change}"
+        cleanedLogs.append(line)
+    return cleanedLogs
 
 #------------------------ route helper functions ------------------------#
 
@@ -152,17 +164,65 @@ async def deleteSessionToken(session_token: str):
         await conn.execute(
             "DELETE FROM sessions WHERE session_token = $1;", session_token
         )
+async def transfer(session_id: str, destination_username: str, amount):
+    # valdiating transfer amount
+    try:
+        amount = int(amount)
+    except (TypeError, ValueError):
+        raise transactionError("Amount must be a whole number")
+    if amount <= 0:
+        raise transactionError("Amount must be greater than zero")
 
+    source_uuid = await _uuid_from_session(session_id)
+    dest_uuid = await _getuuid(destination_username)
 
-async def checkUsernameAvailability(username: str):
+    if str(source_uuid) == str(dest_uuid):
+        raise transactionError("Cannot transfer to yourself")
+
     async with conn_pool.acquire() as conn:
-        row = await conn.fetchrow(
-            "SELECT id FROM users WHERE username = $1;", username
-        )
-    return {"available": not row}
+        try:
+            async with conn.transaction():
+                # Lock both rows in a consistent UUID order to prevent deadlock
+                ids = sorted([str(source_uuid), str(dest_uuid)])
+                await conn.fetchrow(
+                    "SELECT balance FROM accounts WHERE user_id = $1 FOR UPDATE;",
+                    ids[0],
+                )
+                await conn.fetchrow(
+                    "SELECT balance FROM accounts WHERE user_id = $1 FOR UPDATE;",
+                    ids[1],
+                )
 
+                src_row = await conn.fetchrow(
+                    "SELECT balance FROM accounts WHERE user_id = $1;", source_uuid
+                )
+                if not src_row:
+                    return False, "Your account does not exist"
 
+                dst_row = await conn.fetchrow(
+                    "SELECT balance FROM accounts WHERE user_id = $1;", dest_uuid
+                )
+                if not dst_row:
+                    return False, "Recipient account does not exist"
 
+                if src_row["balance"] < amount:
+                    return False, "Insufficient balance"
+
+                await conn.execute(
+                    "INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);",
+                    amount, source_uuid, dest_uuid,
+                )
+                await conn.execute(
+                    "UPDATE accounts SET balance = balance - $1 WHERE user_id = $2;",
+                    amount, source_uuid,
+                )
+                await conn.execute(
+                    "UPDATE accounts SET balance = balance + $1 WHERE user_id = $2;",
+                    amount, dest_uuid,
+                )
+                return True, f"Successfully transferred {amount} to {destination_username}"
+        except Exception as e:
+            return False, f"Transaction failed: {str(e)}"
 
 async def getPlayerHome(session_token):
 # return affiliated teamname, credits belonging to the user, total team credits, list of transactions and game logs
@@ -185,11 +245,19 @@ async def getPlayerHome(session_token):
             WHERE user_id = $1
             ORDER BY b.timeOfFinish DESC;""", userid
         )
-        transactions = await
+        transactions = await conn.fetch(
+            """SELECT t.change AS change, t.source AS source, t.destination AS destination 
+            FROM transactions t WHERE t.source = $1 OR t.destination = $1"""
+        )
+    convertedTransactions = _transactionstoDescriptive(transactions, userid)
     convertedLogs = _gameLogstoDescriptive(gameLogs)
-    return {"teamname": userDetails["teamname"], "userCredits": userDetails["userCredits"],
-    
-    "teamCredits": generalDetails["teamCredits"], "transactions": }
+    return {
+        "teamname": userDetails["teamname"],
+        "userCredits": userDetails["userCredits"],
+        "teamCredits": generalDetails["teamCredits"],
+        "transactions": convertedTransactions,
+        "gamelogs": convertedLogs 
+        }
 
 async def getManagerHome(session_token):
 # return  queue data, players currently playing, player bets, 
