@@ -50,22 +50,30 @@ def _redirect_login():
   
 
 #------------------------ middleware ----------------------------#
-protected = ["/home", "/pay", "/payees", "/play", "/transfer", "/table"]
+protected = ["/home", "/pay", "/payees", "/play", "/transfer"]
+
 
 
 @app.middleware("http")
 async def validate_request(request: Request, call_next):
   session_token = request.cookies.get("session_token")
   if request.url.path in protected:
-    status = await db.validate(session_token = session_token, role = "user")
+    status = await db.validate(session_token = session_token, role = "player")
     if status:
       response = await call_next(request)
       request.state.session_token = session_token
       return response
     else:
       raise InvalidSession()
+  elif request.url.path == "/table":
+    status = await db.validate(session_token = session_token, role = "manager")
+    if status:
+      response = await call_next(request)
+      request.state.session_token = session_token
+      return response
   else:
     response = await call_next(request)
+    return response
   
 
 #----------------------Custom Exception Handling -----------------------#
@@ -164,7 +172,7 @@ async def get_table(request: Request, )
 async def login_post(creds: login, response: Response):
   username = creds.username
   password = creds.password
-  session_token = await db.get_session_token(
+  session_token = await db.getSessionToken(
         username=username,password=password
     )
   redirect = RedirectResponse(url="/home", status_code=303)

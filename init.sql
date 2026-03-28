@@ -2,14 +2,16 @@ CREATE TABLE users(
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     username text UNIQUE NOT NULL,
     password_hash text NOT NULL,
-    access text NOT NULL CHECK ( access IN ('admin','user', 'booth'))
+    isLeader BOOL DEFAULT FALSE,
+    affiliation TEXT NOT NULL,
+    access text NOT NULL CHECK ( access IN ('player', 'manager'))
 );
 
 CREATE TABLE sessions(
     session_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    expires_at TIMESTAMP NOT NULL,
+    expires_at TIMESTAMP NOT NULL DEFAULT (now() + INTERVAL '5 hours'),
     CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
