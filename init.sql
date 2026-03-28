@@ -69,15 +69,3 @@ CREATE TABLE queue(
   timeOfJoin TIMESTAMP DEFAULT now(),
   CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
-
- INSERT INTO users(
-    username,
-    password_hash,
-    access
-    )
-    values (
-        'toastedmaster',
-        '$2b$12$ZN20i9eKmlJhged.2GU8Quw/l.IN9mnBhSMnFGwHO8hZScptufutW',
-        'admin'
-    );

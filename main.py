@@ -89,6 +89,10 @@ def payee_list_exception_handler(request: Request, exc: Exception):
 @app.exception_handler(couldNotGetUsernameAvailability)
 def username_availability_exception_handler(request: Request, exc: Exception):
   return pages.TemplateResponse("error.html", {"request": request, "message":" could not check if username is available."})
+
+@app.exception_handler(authenticationFailure)
+def username_availability_exception_handler(request: Request, exc: Exception):
+  return pages.TemplateResponse("error.html", {"request": request, "message":exc.message})
 #----------------------- GET endpoints --------------------#
 
 @app.get("/")
@@ -135,7 +139,7 @@ async def payees(request: Request):
 async def logout(request: Request):
     session_token = request.state.session_token
     if session_id:
-        await db.delete_session_id(session_token = session_token)
+        await db.deleteSessionToken(session_token = session_token)
     response = RedirectResponse(url="/login", status_code=303)
     response.delete_cookie("session_token")
     return response
@@ -155,7 +159,7 @@ async def play(request: Request):
 
 @app.get("/availability")
 async def play(username: str = None):
-  response = db.check_username_availability(username=username)
+  response = db.checkUsernameAvailability(username=username)
   return JSONResponse(response)
   
   

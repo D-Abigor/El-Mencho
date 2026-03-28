@@ -13,6 +13,7 @@ bcryptCost = 12                 # bcrypt work factor
 
 
 #--------------------------- Init ------------------#
+
 async def session_cleaner():
     while True:
         async with conn_pool.acquire() as conn:
@@ -67,7 +68,6 @@ async def _getTeamnameFromUuid(uuid) -> str:
             raise dbError("Internal db error - could not get corresponding teamname from uuid")
         return row["affiliation"]
 
-
 #------------------------ route helper functions ------------------------#
 
 async def validate(session_token: str, role: str) -> bool:
@@ -117,33 +117,43 @@ async def getSessionToken(username: str, password: str):
                     row["id"],
                 )
                 if existing:
-                    return True, existing["session_id"]
+                    return existing["session_id"]
                 new_session = await conn.fetchrow(
                     """INSERT INTO sessions (user_id, expires_at)
                        VALUES ($1, NOW() + INTERVAL '1 day')
                        RETURNING session_id;""",
                     row["id"],
                 )
-                return True, new_session["session_id"]
-            return False, "Invalid credentials"
+                return new_session["session_id"]
+            else:
+                raise authenticationFailure("Invalid credentials")
         else:
-            # Always hash to avoid timing-based username enumeration
-            await asyncio.to_thread(
-                bcrypt.using(rounds=bcryptCost).hash, password
-            )
-            return False, "Invalid credentials"
+            raise dbError("Internal db error - user does not exist")
+
+
+async def deleteSessionToken(session_token: str):
+    async with conn_pool.acquire() as conn:
+        await conn.execute(
+            "DELETE FROM sessions WHERE session_token = $1;", session_token
+        )
+
+
+async def checkUsernameAvailability(username: str):
+    async with conn_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT id FROM users WHERE username = $1;", username
+        )
+    return {"available": not row}
 
 
 
 
+async def getPlayerHome(session_token):
 
 
+async def getManagerHome(session_token):
 
-
-
-
-
-
+    
 
 
 
