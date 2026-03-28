@@ -41,8 +41,8 @@ CREATE TABLE gamesPlayed(
 
 CREATE TABLE activeGames(
   user_id uuid PRIMARY KEY,
-  bet_amount INTEGER NOT NULL CHECK ( bet_amount >= /////// ),
-  game TEXT NOT NULL,
+  betAmount INTEGER NOT NULL CHECK ( bet_amount >= /////// ),
+  game TEXT NOT NULL CHECK ( game IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s')),
   CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -63,7 +63,7 @@ CREATE TABLE gamePlayers(
 CREATE TABLE queue(
   number SERIAL PRIMARY KEY,
   user_id UUID NOT NULL,
-  game TEXT NOT NULL,
+  game TEXT NOT NULL CHECK ( game IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s')),
   timeOfJoin TIMESTAMP DEFAULT now(),
   CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );

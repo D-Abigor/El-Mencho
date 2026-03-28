@@ -96,6 +96,27 @@ def _transactionstoDescriptive(transactionlogs: list([asyncpg.Record]), uuid: st
         cleanedLogs.append(line)
     return cleanedLogs
 
+def _convertQueue(queue: list([asyncpg.Record])):
+    queuecleaned = {}
+    index = 1
+    for players in queue:
+        queuecleaned[index] = players[username]
+        index+=1
+    return queuecleaned
+
+def _convertActivePlayers(activePlayers: list([asyncpg.Record])):
+    players = {}
+    for player in activePlayers:
+        players[player.username] = player.bet
+    return players
+
+def _cleanUserQueue(activeQueue: list([asyncpg.Record])):
+    queues = {}
+    for queue in activeQueue:
+        queues[queue["game"]] = queue["position"]
+    return queues 
+
+
 #------------------------ route helper functions ------------------------#
 
 async def validate(session_token: str, role: str) -> bool:
@@ -197,16 +218,16 @@ async def transfer(session_id: str, destination_username: str, amount):
                     "SELECT balance FROM accounts WHERE user_id = $1;", source_uuid
                 )
                 if not src_row:
-                    return False, "Your account does not exist"
+                    raise transactionError("Your account does not exist")
 
                 dst_row = await conn.fetchrow(
                     "SELECT balance FROM accounts WHERE user_id = $1;", dest_uuid
                 )
                 if not dst_row:
-                    return False, "Recipient account does not exist"
+                    raise transactionError("Recipient account does not exist")
 
                 if src_row["balance"] < amount:
-                    return False, "Insufficient balance"
+                    return transactionError("Insufficient balance")
 
                 await conn.execute(
                     "INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);",
@@ -220,9 +241,9 @@ async def transfer(session_id: str, destination_username: str, amount):
                     "UPDATE accounts SET balance = balance + $1 WHERE user_id = $2;",
                     amount, dest_uuid,
                 )
-                return True, f"Successfully transferred {amount} to {destination_username}"
+                return True
         except Exception as e:
-            return False, f"Transaction failed: {str(e)}"
+            raise transactionError(f"Transaction failed: {str(e)}")
 
 async def getPlayerHome(session_token):
 # return affiliated teamname, credits belonging to the user, total team credits, list of transactions and game logs
@@ -253,23 +274,56 @@ async def getPlayerHome(session_token):
     convertedLogs = _gameLogstoDescriptive(gameLogs)
     return {
         "teamname": userDetails["teamname"],
-        "userCredits": userDetails["userCredits"],
-        "teamCredits": generalDetails["teamCredits"],
+        "usercredits": userDetails["userCredits"],
+        "teamcredits": generalDetails["teamCredits"],
         "transactions": convertedTransactions,
         "gamelogs": convertedLogs 
         }
 
-async def getManagerHome(session_token):
+async def getManagerHome(session_token: str, game: str):
 # return  queue data, players currently playing, player bets, 
+    async with conn_pool.acquire() as conn:
+        queue = conn.fetch(
+            """SELECT u.username AS username FROM users u JOIN queue q 
+            ON q.user_id = u.id ORDER BY q.timeOfJoin ASC;"""
+        )
+        activePlayers = conn.fetch(
+            """
+            SELECT u.username AS username a.betAmount AS bet 
+            FROM users u JOIN activeGames a ON a.user_id = u.id WHERE game = $1;
+            """, game
+        )
+    
+    playersCleaned = _convertActivePlayers(activePlayers)
+    queueCleaned = _convertQueue(queue)
 
-async def getQueue(session_token)
+    return {
+        "queue": queueCleaned,
+        "players": playersCleaned
+    }
+
+async def getUserQueue(session_token):
 # return json with game name and their current status in q, total q length
+    async with conn_pool.acquire() as conn:
+        activeQueues = conn.fetch("""
+        SELECT game, position FROM ( 
+        SELECT game, ROW_NUMBER() OVER (
+        PARTITION BY game
+        ORDER BY timeOfJoin ASC) AS position
+        FROM queue) q WHERE user_id = $1
+        """, _uuid_from_session(session_token)
+        )
+    cleanedUserQueue = _cleanUserQueue(activeQueues)
+    return cleanedUserQueue
 
 
 
 
 
-
+async def removeFromQueue(username: str, game: str):
+    uuid = _getuuid(username)
+    async with conn_pool.acquire() as conn:
+        row = conn.execute("DELETE FROM queue WHERE user_id = $1 AND game = $2 ;", uuid, game)
 
 
 
