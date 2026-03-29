@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The House — Confirm Your Seat</title>
+  <link rel="stylesheet" href="/static/base.css" />
+  <style>
+    .confirm-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+
+    .confirm-card {
+      background: rgba(0,0,0,0.45);
+      border: 1px solid var(--border-glow);
+      border-radius: 8px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      animation: pulse-border 2s infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: rgba(201,168,76,0.5); }
+      50%       { border-color: var(--gold); box-shadow: 0 0 20px rgba(201,168,76,0.2); }
+    }
+
+    .confirm-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .confirm-game {
+      font-family: 'Cinzel', serif;
+      font-size: 1.2rem;
+      color: var(--gold-light);
+      margin-bottom: 0.2rem;
+    }
+    .confirm-table {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .bet-input-wrap { position: relative; }
+    .bet-prefix {
+      position: absolute;
+      left: 0.85rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--gold);
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+    .bet-input-wrap input { padding-left: 2.2rem; }
+
+    .confirm-actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="/">The <span>♠</span> House</a>
+    <div class="nav-links">
+      <a href="/home">Home</a>
+      <a href="/play">The Floor</a>
+      <a href="/logout">Leave</a>
+    </div>
+  </nav>
+
+  <main class="page-md">
+    <h1 class="fade-up" style="margin-bottom:0.3rem;">Confirm Your Seat</h1>
+    <p class="fade-up fade-up-1" style="color:var(--text-muted); font-style:italic; margin-bottom:0.5rem;">
+      The dealer is waiting. Place your bet or step aside.
+    </p>
+
+    {% if pending %}
+      <div class="confirm-list">
+        {% for item in pending %}
+          <div class="confirm-card fade-up fade-up-2">
+            <div class="confirm-game">{{ item.game }}</div>
+            <div class="confirm-table">Table {{ item.tableId }}</div>
+
+            <form onsubmit="submitConfirm(event, '{{ item.tableId }}')">
+              <div class="form-group">
+                <label>Your Bet Amount</label>
+                <div class="bet-input-wrap">
+                  <span class="bet-prefix">¢</span>
+                  <input
+                    type="number"
+                    name="betAmount"
+                    min="1"
+                    placeholder="0"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="confirm-actions">
+                <button type="submit" name="action" value="confirm" class="btn btn-gold" onclick="this.form.action_val='confirm'">
+                  I'm In
+                </button>
+                <button type="button" class="btn btn-red" onclick="submitDecline('{{ item.tableId }}')">
+                  Step Aside
+                </button>
+              </div>
+              <div class="fb-msg" style="display:none; margin-top:0.75rem;"></div>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state fade-up fade-up-2">
+        <p>No seats waiting for you right now.</p>
+        <a href="/play" class="btn btn-outline" style="margin-top:1.5rem;">Browse Games</a>
+      </div>
+    {% endif %}
+  </main>
+
+  <script>
+    async function submitConfirm(e, tablenum) {
+      e.preventDefault();
+      const form = e.target;
+      const betAmount = form.querySelector('input[name=betAmount]').value;
+      const fb = form.querySelector('.fb-msg');
+      const btns = form.querySelectorAll('button');
+      btns.forEach(b => b.disabled = true);
+
+      const payload = {
+        tablenum: String(tablenum),
+        confirmation: true,
+        betAmount: betAmount,
+      };
+      await postConfirm(payload, fb, btns);
+    }
+
+    async function submitDecline(tablenum) {
+      const payload = { tablenum: String(tablenum), confirmation: false, betAmount: "0" };
+      try {
+        await fetch('/gameConfirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        window.location.reload();
+      } catch(e) { /* ignore */ }
+    }
+
+    async function postConfirm(payload, fb, btns) {
+      try {
+        const res = await fetch('/gameConfirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          fb.style.display = 'block';
+          fb.className = 'alert alert-success';
+          fb.textContent = '✓ Seat confirmed! Good luck.';
+          setTimeout(() => window.location.href = '/play', 1200);
+        } else {
+          fb.style.display = 'block';
+          fb.className = 'alert alert-error';
+          fb.textContent = '✗ Could not confirm. Check your balance.';
+          btns.forEach(b => b.disabled = false);
+        }
+      } catch(err) {
+        fb.style.display = 'block';
+        fb.className = 'alert alert-error';
+        fb.textContent = 'Network error.';
+        btns.forEach(b => b.disabled = false);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The House — The Floor</title>
+  <link rel="stylesheet" href="/static/base.css" />
+  <style>
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .game-card {
+      background: rgba(0,0,0,0.48);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .game-card:hover {
+      border-color: var(--gold);
+      box-shadow: var(--shadow-gold);
+    }
+    .game-card::before {
+      content: attr(data-suit);
+      position: absolute;
+      font-size: 7rem;
+      right: -1rem;
+      top: -1.5rem;
+      opacity: 0.05;
+      pointer-events: none;
+    }
+    .game-card.in-queue { border-color: rgba(201,168,76,0.5); }
+    .game-card.in-queue::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .game-name {
+      font-family: 'Cinzel', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.25rem;
+    }
+    .game-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 1.1rem;
+      line-height: 1.4;
+    }
+
+    .queue-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.88rem;
+    }
+    .queue-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .queue-dot.waiting { background: var(--gold); box-shadow: 0 0 6px var(--gold); animation: shimmer 2s infinite; }
+    .queue-dot.none    { background: var(--text-muted); }
+
+    .game-actions { display: flex; gap: 0.6rem; }
+
+    /* Table selector modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--felt-light);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: var(--shadow-deep), var(--shadow-gold);
+      animation: fadeUp 0.25s ease;
+    }
+    .modal h3 { margin-bottom: 1.25rem; }
+    .table-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1.5rem; }
+    .table-btn {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      padding: 0.65rem 0.5rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.18s;
+    }
+    .table-btn:hover, .table-btn.selected {
+      background: rgba(201,168,76,0.15);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .modal-actions { display: flex; gap: 0.75rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="/">The <span>♠</span> House</a>
+    <div class="nav-links">
+      <a href="/home">Home</a>
+      <a href="/play">The Floor</a>
+      <a href="/payees">Pay</a>
+      <a href="/logout">Leave</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <header style="margin-bottom:2rem;" class="fade-up">
+      <h1>The Floor</h1>
+      <p style="color:var(--text-muted); font-style:italic; margin-top:0.3rem;">Choose your game and join the queue</p>
+    </header>
+
+    {% set game_meta = {
+      'teenPatti':  {'label': 'Teen Patti',  'desc': 'The classic three-card showdown.', 'suit': '♥'},
+      'poker':      {'label': 'Poker',        'desc': 'Community cards. Nerves of steel.', 'suit': '♠'},
+      'spadesOf3':  {'label': 'Spades of 3',  'desc': 'Take tricks, honour your bid.', 'suit': '♠'},
+      'blackjack':  {'label': 'Blackjack',    'desc': 'Beat the house to 21.', 'suit': '♣'},
+      'rummy':      {'label': 'Rummy',        'desc': 'Meld your hand before they do.', 'suit': '♦'},
+      'crazy8s':    {'label': "Crazy 8s",     'desc': 'Wild cards welcome.', 'suit': '♣'},
+    } %}
+
+    <div class="games-grid">
+      {% for game_key, pos in games_and_queue.items() %}
+        {% set meta = game_meta.get(game_key, {'label': game_key, 'desc': '', 'suit': '♠'}) %}
+        <div class="game-card {% if pos != -1 %}in-queue{% endif %}" data-suit="{{ meta.suit }}" data-game="{{ game_key }}">
+          <div class="game-name">{{ meta.label }}</div>
+          <div class="game-desc">{{ meta.desc }}</div>
+
+          <div class="queue-status">
+            {% if pos != -1 %}
+              <span class="queue-dot waiting"></span>
+              <span style="color:var(--gold-light);">Queue position: <strong>{{ pos }}</strong></span>
+            {% else %}
+              <span class="queue-dot none"></span>
+              <span>Not queued</span>
+            {% endif %}
+          </div>
+
+          <div class="game-actions">
+            {% if pos == -1 %}
+              <button class="btn btn-gold" onclick="openJoinModal('{{ game_key }}', '{{ meta.label }}')">
+                Join Queue
+              </button>
+            {% else %}
+              <span class="badge badge-gold" style="padding:0.45rem 1rem; font-size:0.72rem;">In Queue</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <!-- Table selector modal -->
+  <div class="modal-backdrop" id="joinModal">
+    <div class="modal">
+      <h3 id="modalTitle">Select a Table</h3>
+      <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.25rem;">Choose a table to join the queue</p>
+      <div class="table-grid" id="tableGrid">
+        {% for n in range(1, 7) %}
+          <button class="table-btn" onclick="selectTable({{ n }})">Table {{ n }}</button>
+        {% endfor %}
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-gold" id="confirmJoinBtn" onclick="confirmJoin()" disabled>Sit Down</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+      <div id="modalFeedback" style="display:none; margin-top:1rem;"></div>
+    </div>
+  </div>
+
+  <script>
+    let selectedGame = null;
+    let selectedTable = null;
+
+    function openJoinModal(gameKey, gameLabel) {
+      selectedGame = gameKey;
+      selectedTable = null;
+      document.getElementById('modalTitle').textContent = `Join Queue — ${gameLabel}`;
+      document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById('confirmJoinBtn').disabled = true;
+      document.getElementById('modalFeedback').style.display = 'none';
+      document.getElementById('joinModal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('joinModal').classList.remove('open');
+    }
+
+    function selectTable(num) {
+      selectedTable = num;
+      document.querySelectorAll('.table-btn').forEach((b, i) => {
+        b.classList.toggle('selected', i + 1 === num);
+      });
+      document.getElementById('confirmJoinBtn').disabled = false;
+    }
+
+    async function confirmJoin() {
+      if (!selectedGame || !selectedTable) return;
+      const btn = document.getElementById('confirmJoinBtn');
+      btn.disabled = true; btn.textContent = 'Joining…';
+
+      const fb = document.getElementById('modalFeedback');
+      try {
+        const res = await fetch('/queue/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tablenum: String(selectedTable) }),
+        });
+        if (res.ok) {
+          fb.style.display = 'block';
+          fb.className = 'alert alert-success';
+          fb.textContent = `✓ Joined queue for Table ${selectedTable}`;
+          setTimeout(() => { closeModal(); window.location.reload(); }, 900);
+        } else {
+          fb.style.display = 'block';
+          fb.className = 'alert alert-error';
+          fb.textContent = '✗ Could not join queue. Try another table.';
+          btn.disabled = false; btn.textContent = 'Sit Down';
+        }
+      } catch (err) {
+        fb.style.display = 'block';
+        fb.className = 'alert alert-error';
+        fb.textContent = 'Network error. Please try again.';
+        btn.disabled = false; btn.textContent = 'Sit Down';
+      }
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('joinModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>

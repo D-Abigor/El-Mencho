@@ -1,0 +1,18 @@
+class InvalidSession(Exception):
+    def __init__(self, message: str = "Your session is invalid or has expired."):
+        self.message = message
+
+class dbError(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+class couldNotGetUsernameAvailability(Exception):
+    pass
+
+class authenticationFailure(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+class transactionError(Exception):
+    def __init__(self, message: str):
+        self.message = message

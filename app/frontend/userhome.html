@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The House — My Account</title>
+  <link rel="stylesheet" href="/static/base.css" />
+  <style>
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+    .page-header .greeting {
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+
+    .log-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .log-item {
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(201,168,76,0.08);
+      font-size: 0.93rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      line-height: 1.4;
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-icon {
+      font-size: 0.8rem;
+      margin-top: 0.15rem;
+      flex-shrink: 0;
+    }
+    .log-item.win  .log-icon { color: #4ade80; }
+    .log-item.loss .log-icon { color: #ff5c75; }
+    .log-item.xfer .log-icon { color: var(--gold); }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 0.95rem;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .quick-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="/">The <span>♠</span> House</a>
+    <div class="nav-links">
+      <a href="/home">Home</a>
+      <a href="/play">Play</a>
+      <a href="/payees">Pay</a>
+      <a href="/logout">Leave</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <header class="page-header fade-up">
+      <div>
+        <p class="greeting">Welcome back to the floor,</p>
+        <h1>{{ teamname }}</h1>
+      </div>
+      <div class="quick-actions">
+        <a href="/play" class="btn btn-gold">Join a Game</a>
+        <a href="/payees" class="btn btn-outline">Send Credits</a>
+      </div>
+    </header>
+
+    <!-- Stats row -->
+    <div class="stat-row fade-up fade-up-1">
+      <div class="stat-card">
+        <div class="stat-label">Your Credits</div>
+        <div class="stat-value big">{{ usercredits }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Team Total</div>
+        <div class="stat-value">{{ teamcredits }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Team</div>
+        <div class="stat-value" style="font-size:1.4rem; padding-top: 0.3rem;">{{ teamname }}</div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="two-col fade-up fade-up-2">
+
+      <!-- Game History -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Game History</h3>
+          <span class="badge badge-gold">Recent</span>
+        </div>
+        {% if gamelogs %}
+          <ul class="log-list">
+            {% for entry in gamelogs %}
+              <li class="log-item {% if 'won' in entry %}win{% else %}loss{% endif %}">
+                <span class="log-icon">{% if 'won' in entry %}▲{% else %}▼{% endif %}</span>
+                <span>{{ entry }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty-state">No games played yet. Hit the floor!</div>
+        {% endif %}
+      </div>
+
+      <!-- Transactions -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Transactions</h3>
+          <span class="badge badge-gold">Recent</span>
+        </div>
+        {% if transactions %}
+          <ul class="log-list">
+            {% for entry in transactions %}
+              <li class="log-item xfer">
+                <span class="log-icon">⇄</span>
+                <span>{{ entry }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty-state">No transactions yet.</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </main>
+</body>
+</html>

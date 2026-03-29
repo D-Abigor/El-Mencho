@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — The House</title>
+  <link rel="stylesheet" href="/static/base.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .login-wrap {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .login-header .brand {
+      font-family: 'Cinzel', serif;
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .login-header .brand span { color: var(--red-bright); }
+    .login-header p {
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .login-card {
+      background: rgba(0,0,0,0.55);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2.25rem 2rem;
+      box-shadow: var(--shadow-deep), 0 0 40px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '♠';
+      position: absolute;
+      font-size: 9rem;
+      color: var(--gold);
+      opacity: 0.03;
+      right: -1.5rem;
+      bottom: -2rem;
+      pointer-events: none;
+      font-family: serif;
+    }
+
+    .login-card .form-group:last-of-type { margin-bottom: 1.75rem; }
+
+    .form-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .form-footer .btn { flex: 1; min-width: 120px; }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--gold); }
+
+    /* subtle top bar */
+    .login-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), var(--red), var(--gold), transparent);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap fade-up">
+    <div class="login-header">
+      <a href="/" class="brand">The <span>♠</span> House</a>
+      <p>Show your hand to enter</p>
+    </div>
+
+    <div class="login-card">
+      <form action="/login" method="post" id="loginForm">
+        <div class="form-group">
+          <label for="username">Player Handle</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="your username"
+            autocomplete="username"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Passphrase</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <div class="form-footer">
+          <button type="submit" class="btn btn-gold">Take a Seat</button>
+        </div>
+      </form>
+    </div>
+
+    <a href="/" class="back-link">← Back to the lobby</a>
+  </div>
+
+  <script>
+    // Convert form to JSON POST to match FastAPI's JSON body expectation
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type=submit]');
+      btn.disabled = true;
+      btn.textContent = 'Dealing…';
+
+      const payload = {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value,
+      };
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          redirect: 'follow',
+        });
+        if (res.ok || res.redirected) {
+          window.location.href = res.url || '/home';
+        } else {
+          const text = await res.text();
+          document.body.innerHTML = text;
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Take a Seat';
+      }
+    });
+  </script>
+</body>
+</html>

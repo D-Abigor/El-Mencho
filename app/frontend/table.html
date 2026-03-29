@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The House — Table Control</title>
+  <link rel="stylesheet" href="/static/base.css" />
+  <style>
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .table-switcher { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .t-btn {
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      padding: 0.45rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .t-btn:hover, .t-btn.active {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(201,168,76,0.08);
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 680px) { .control-grid { grid-template-columns: 1fr; } }
+
+    .player-list { list-style: none; }
+    .player-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid rgba(201,168,76,0.08);
+      font-size: 0.95rem;
+    }
+    .player-item:last-child { border-bottom: none; }
+    .player-name { font-family: 'Cinzel', serif; font-size: 0.88rem; letter-spacing: 0.05em; }
+    .player-bet { color: var(--gold); font-size: 0.85rem; }
+
+    .queue-entry {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid rgba(201,168,76,0.06);
+    }
+    .queue-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: rgba(201,168,76,0.15);
+      border: 1px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .action-panel { display: flex; flex-direction: column; gap: 0.9rem; }
+    .action-row { display: flex; gap: 0.75rem; align-items: flex-end; }
+
+    select option { background: var(--felt); }
+
+    .result-form { display: none; }
+    .result-form.open { display: block; }
+    .result-entries { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+    .result-entry {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .result-entry label { font-size: 0.82rem; color: var(--text-muted); font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+    .result-entry input { padding: 0.5rem 0.75rem; font-size: 0.95rem; }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 0.4rem;
+    }
+    .status-dot.waiting { background: var(--text-muted); }
+    .status-dot.active  { background: #4ade80; box-shadow: 0 0 6px #4ade80; animation: shimmer 1.5s infinite; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="/">The <span>♠</span> House</a>
+    <div class="nav-links">
+      <a href="/table?tablenum=1">Tables</a>
+      <a href="/logout">Leave</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="table-header fade-up">
+      <div>
+        <h1>
+          <span class="status-dot {{ 'active' if players else 'waiting' }}"></span>
+          Table {{ tablenum }}
+        </h1>
+        <p style="color:var(--text-muted); font-style:italic; margin-top:0.2rem;">Manager control panel</p>
+      </div>
+      <div class="table-switcher">
+        {% for n in range(1, 7) %}
+          <a href="/table?tablenum={{ n }}" class="t-btn {% if tablenum|string == n|string %}active{% endif %}">
+            Table {{ n }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="control-grid">
+
+      <!-- Queue & Players -->
+      <div style="display:flex; flex-direction:column; gap:1.5rem;">
+
+        <div class="panel fade-up fade-up-1">
+          <div class="panel-header" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+            <h3>Active Players</h3>
+            <span class="badge badge-green">{{ players|length }} seated</span>
+          </div>
+          {% if players %}
+            <ul class="player-list">
+              {% for username, bet in players.items() %}
+                <li class="player-item">
+                  <span class="player-name">{{ username }}</span>
+                  <span class="player-bet">¢ {{ bet }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p style="color:var(--text-muted); font-style:italic; font-size:0.9rem;">No players seated yet.</p>
+          {% endif %}
+        </div>
+
+        <div class="panel fade-up fade-up-2">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+            <h3>Queue</h3>
+            <span class="badge badge-gold">{{ queue|length }} waiting</span>
+          </div>
+          {% if queue %}
+            {% for pos, username in queue.items() %}
+              <div class="queue-entry">
+                <span class="queue-num">{{ pos }}</span>
+                <span style="font-size:0.93rem;">{{ username }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p style="color:var(--text-muted); font-style:italic; font-size:0.9rem;">Queue is empty.</p>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Controls -->
+      <div class="panel fade-up fade-up-3">
+        <h3 style="margin-bottom:1.5rem;">Controls</h3>
+        <div class="action-panel" id="controls">
+
+          <!-- Configure game -->
+          <div class="form-group">
+            <label>Game</label>
+            <select id="gameSelect">
+              <option value="">— select game —</option>
+              <option value="teenPatti">Teen Patti</option>
+              <option value="poker">Poker</option>
+              <option value="spadesOf3">Spades of 3</option>
+              <option value="blackjack">Blackjack</option>
+              <option value="rummy">Rummy</option>
+              <option value="crazy8s">Crazy 8s</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Max Players</label>
+            <input type="number" id="maxPlayers" min="2" max="10" value="6" />
+          </div>
+          <button class="btn btn-outline" onclick="configureTable()">Apply Config</button>
+
+          <hr class="divider" />
+
+          <!-- Pull from queue -->
+          <div class="action-row">
+            <div class="form-group" style="flex:1; margin-bottom:0;">
+              <label>Pull from Queue</label>
+              <input type="number" id="pullCount" min="1" max="10" value="2" />
+            </div>
+            <button class="btn btn-gold" onclick="confirmPlayers()" style="flex-shrink:0;">
+              Notify Players
+            </button>
+          </div>
+
+          <hr class="divider" />
+
+          <!-- Start / End game -->
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <button class="btn btn-gold" onclick="startGame()" style="flex:1;">▶ Start Game</button>
+            <button class="btn btn-red" onclick="toggleEndForm()" style="flex:1;">■ End Game</button>
+          </div>
+
+          <!-- End game results form -->
+          <div class="result-form" id="resultForm">
+            <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:0.75rem; font-style:italic;">
+              Enter each player's final payout:
+            </p>
+            <div class="result-entries" id="resultEntries">
+              {% for username, bet in players.items() %}
+                <div class="result-entry" data-uuid="">
+                  <label>{{ username }}</label>
+                  <input type="number" min="0" placeholder="final ¢" class="final-amt" />
+                </div>
+              {% endfor %}
+            </div>
+            <button class="btn btn-red" onclick="endGame()" style="width:100%;">Confirm Results</button>
+          </div>
+
+          <div id="ctrlFeedback" style="display:none; margin-top:0.5rem;"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const tablenum = "{{ tablenum }}";
+
+    async function api(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return res;
+    }
+
+    function feedback(msg, type='success') {
+      const el = document.getElementById('ctrlFeedback');
+      el.style.display = 'block';
+      el.className = `alert alert-${type}`;
+      el.textContent = msg;
+      setTimeout(() => { el.style.display = 'none'; }, 3500);
+    }
+
+    async function configureTable() {
+      const game = document.getElementById('gameSelect').value;
+      const max  = document.getElementById('maxPlayers').value;
+      const res = await api('/table/configure', { tablenum, game, max_players: parseInt(max) });
+      if (res.ok) { feedback('✓ Table configured.'); }
+      else        { feedback('✗ Configuration failed.', 'error'); }
+    }
+
+    async function confirmPlayers() {
+      const n = parseInt(document.getElementById('pullCount').value);
+      const res = await api('/table/confirmPlayers', { tablenum, numberOfPlayers: n });
+      if (res.ok) { feedback(`✓ ${n} player(s) notified.`); }
+      else        { feedback('✗ Could not notify players.', 'error'); }
+    }
+
+    async function startGame() {
+      const res = await api('/table/startGame', { tablenum });
+      if (res.ok) { feedback('✓ Game started!'); window.location.reload(); }
+      else        { feedback('✗ Could not start game.', 'error'); }
+    }
+
+    function toggleEndForm() {
+      const f = document.getElementById('resultForm');
+      f.classList.toggle('open');
+    }
+
+    async function endGame() {
+      const entries = document.querySelectorAll('#resultEntries .result-entry');
+      const results = {};
+      // Note: UUIDs aren't available client-side here; manager should enter payouts
+      // by username. The backend currently expects uuid keys — this is a simplification.
+      // In production, a /table/players API call would return uuid→username mapping.
+      entries.forEach(entry => {
+        const uuid = entry.dataset.uuid;
+        const amt  = entry.querySelector('.final-amt').value;
+        if (uuid && amt) results[uuid] = parseInt(amt);
+      });
+      const res = await api('/table/endGame', { tablenum, results });
+      if (res.ok) { feedback('✓ Game ended and results saved.'); setTimeout(() => window.location.reload(), 1500); }
+      else        { feedback('✗ Could not end game.', 'error'); }
+    }
+  </script>
+</body>
+</html>
