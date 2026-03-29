@@ -333,6 +333,17 @@ async def removeFromQueue(username: str, game: str):
 
 async def insertIntoQueue(session_token: str, game: str):
 
-async def insertIntoGame(session_token: str, game: str):
+async def startGame(players, game: str):
+
+async def endGame(results, game: str):
+    # ccleaning up game table from the previous game, setting correct balances according to win or lose
+
+async def confirmPlayers(numberOfPlayers, game: str):
+    # function to pick numberOfPlayers from queue and prepare to push into game table
+
+async def confirmParticipation(session_token, game: str, confirmation: bool):
+    # to get user confirmation before moving the player into game table, dropped from queue otherwise
 
 
+
+ 

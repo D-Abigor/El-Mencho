@@ -27,10 +27,15 @@ class login(BaseModel):
 
 class transferDetail(BaseModel):
   recepient: str
-  amount: int          # inter team transaction, amount restricted to be integers
+  amount: int          # transaction, amount restricted to be integers
 
 class game(BaseModel):
   amount: int          # only integer bet amounts allowed
+
+class participationConfirm(BaseModel):
+  game: str
+  confirmation: bool
+
 
 
 #------------------ Internal helper function ---------------------------#
@@ -176,8 +181,22 @@ async def getqueue(request: Request):
   queue = await db.getUserQueue(session_token)
   return JSONResponse(queue)
 
+@app.get("/gameConfirm")
+async def checkParticipation(request: Request):
+  session_token = request.state.session_token
+  queueStatus = await db.getParticipation(session_token)
 
 #------------------------ POST endpoints ----------------------#
+
+@app.post("/gameConfirm")
+async def confirmParticipation(request: Request, participation: participationConfirm):
+  session_token = request.state.session_token
+  confirm = await db.confirmParticipation(session_token = session_token, game = participation.game, confirmation = participation.confirmation)
+  redirect = RedirectResponse(url="/game", status_code = 202)
+  return redirect
+
+
+
 
 @app.post("/login")
 async def login_post(creds: login, response: Response):
@@ -201,14 +220,14 @@ async def login_post(creds: login, response: Response):
 async def transfer_post(details: transferDetail, response: Response):
   session_id = request.state.session_token
   message = await db.transfer(
-      session_id, data.get("destination", ""), data.get("amount")
+      session_id, details.recepient, details.amount
   )
   return pages.TemplateResponse(
       "successful_transaction.html", {"request": request, "message": message}
   )
 
 
-@app.post("/game")
+@app.post("/game") # post that decides how much to bet
 async def play_post(details: game, response: Response):
 
 

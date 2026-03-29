@@ -67,3 +67,4 @@ CREATE TABLE queue(
   timeOfJoin TIMESTAMP DEFAULT now(),
   CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
+ 

@@ -15,4 +15,4 @@ class authenticationFailure(Exception):
 
 class transactionError(Exception):
   def __init__(self, message: str):
-    self.message = message
+    self.message = message 
