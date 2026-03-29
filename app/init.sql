@@ -30,44 +30,12 @@ CREATE TABLE transactions(
  );
 
 
-
-
-
-
-
-CREATE TABLE activeGames(
-  user_id uuid PRIMARY KEY,
-  betAmount INTEGER NOT NULL CHECK ( bet_amount >= /////// ),
-  game TEXT NOT NULL CHECK ( game IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s')),
-  CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE TABLE gamePlayers(
-  ID SERIAL PRIMARY KEY, 
-  gameId UUID NOT NULL,
-  user_id UUID NOT NULL,
-  initialBet INT NOT NULL,
-  finalAmount INT NOT NULL CHECK ( final_amount >= 0),
-  timeOfFinish TIMESTAMP NOT NULL DEFAULT now(),
-  CONSTRAINT gameId_fkey FOREIGN KEY (gameId) REFERENCES gamesPlayed(gameId),
-  CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id),
-  CONSTRAINT finishTime_fkey FOREIGN KEY (timeOfFinish) REFERENCES gamesPlayed(timeOfFinish),
-);
-
-
-CREATE TABLE queue(
-  number SERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
-  game TEXT NOT NULL CHECK ( game IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s')),
-  timeOfJoin TIMESTAMP DEFAULT now(),
-  CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
-);
  
 
 
 
  CREATE TABLE tables(
-  tableId INT PRIMARY KEY DEFAULT,
+  tableId INT PRIMARY KEY,
   gameSelected TEXT CHECK (gameSelected IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s', '')),
   status TEXT CHECK ( status IN ('waiting', 'active')),
   max_players INT

@@ -250,8 +250,6 @@ async def transfer(session_id: str, destination_username: str, amount):
             raise transactionError(f"Transaction failed: {str(e)}")
 
 
-
-##### rewrite
 async def getPlayerHome(session_token):
 # return affiliated teamname, credits belonging to the user, total team credits, list of transactions and game logs
     userid = _getuuid(session_token)
@@ -268,7 +266,9 @@ async def getPlayerHome(session_token):
             WHERE u.affiliation = $1;""", userDetails["teamname"]
         )
         gameLogs = await conn.fetch(
-            """"SELECT b.game, b.timeOfFinish, a.initialBet, a.finalAmount 
+            """"SELECT 
+            b.game AS game, b.timeOfFinish AS timeOfFinish,
+            a.initialBet AS initialBet, a.finalAmount AS finalAmount
             FROM gamePlayers a JOIN gamesPlayed b ON a.gameId = b.gameId 
             WHERE user_id = $1
             ORDER BY b.timeOfFinish DESC;""", userid
@@ -289,18 +289,18 @@ async def getPlayerHome(session_token):
 
 
 #### rewrite
-async def getManagerHome(game: str):
+async def getTableDetails(tablenum: str):
 # return  queue data, players currently playing, player bets, 
     async with conn_pool.acquire() as conn:
         queue = conn.fetch(
             """SELECT u.username AS username FROM users u JOIN queue q 
-            ON q.user_id = u.id ORDER BY q.timeOfJoin ASC;"""
+            ON q.userId = u.id WHERE tableId = $1 ORDER BY q.timeOfJoin ASC;""", tablenum
         )
         activePlayers = conn.fetch(
             """
             SELECT u.username AS username a.betAmount AS bet 
-            FROM users u JOIN activeGames a ON a.user_id = u.id WHERE game = $1;
-            """, game
+            FROM users u JOIN activePlayers a ON a.user_id = u.id WHERE tableId = $1;
+            """, tablenum
         )
     
     playersCleaned = _convertActivePlayers(activePlayers)
@@ -313,44 +313,81 @@ async def getManagerHome(game: str):
 
 
 
-###### rewrite
 async def getUserQueue(session_token):
 # return json with game name and their current status in q, total q length
     async with conn_pool.acquire() as conn:
         activeQueues = conn.fetch("""
-        SELECT game, position FROM ( 
-        SELECT game, ROW_NUMBER() OVER (
-        PARTITION BY game
-        ORDER BY timeOfJoin ASC) AS position
-        FROM queue) q WHERE user_id = $1
+        SELECT gameSelected AS game, position
+        FROM (
+            SELECT 
+                q.userId,
+                t.gameSelected,
+                ROW_NUMBER() OVER (
+                    PARTITION BY q.tableId
+                    ORDER BY q.timeOfJoin ASC
+                ) AS position
+            FROM queue q
+            JOIN tables t ON q.tableId = t.tableId
+        ) sub
+        WHERE userId = $1;
         """, _uuid_from_session(session_token)
         )
     cleanedUserQueue = _cleanUserQueue(activeQueues)
     return cleanedUserQueue
 
 
-
-
-
-##### rewrite
 async def removeFromQueue(username: str, game: str):
     uuid = _getuuid(username)
     async with conn_pool.acquire() as conn:
-        row = conn.execute("DELETE FROM queue WHERE user_id = $1 AND game = $2 ;", uuid, game)
+        row = conn.execute("DELETE FROM queue WHERE userId = $1 AND game = $2 ;", uuid, game)
 
 
-async def insertIntoQueue(session_token: str, game: str):
+async def insertIntoQueue(session_token: str, tablenum: str):
+    userId = _getuuid(session_token)
+    async with conn_pool.acquire() as conn:
+        row = await conn.execute("""
+        INSERT INTO queue(tableId,userId) 
+        VALUES($1,$2)
+        """, tablenum, userId
+        )
 
-async def startGame(players, game: str):
+async def startGame(players, tablenum: str):
 
-async def endGame(results, game: str):
+async def endGame(results, tablenum: str):
     # ccleaning up game table from the previous game, setting correct balances according to win or lose
 
-async def confirmPlayers(numberOfPlayers, game: str):
+async def confirmPlayers(numberOfPlayers, tablenum: str):
     # function to pick numberOfPlayers from queue and prepare to push into game table
 
-async def confirmParticipation(session_token, game: str, confirmation: bool):
+async def confirmParticipation(session_token, tablenum: str, confirmation: bool):
     # to get user confirmation before moving the player into game table, dropped from queue otherwise
+    uuid = _getuuid(session_token)
+    async with conn_pool.acquire() as conn:
+        if confirmation:
+            response = await conn.execute("""
+            UPDATE queue markedReady = TRUE 
+            WHERE userId = $1 AND tableId = $2""",uuid, tablenum
+            )
+            if not response.endswith("1"):
+                raise dbError(f"could not get confirmation for {tablenum}")
+        else:
+            response = await conn.execute("""
+            DELETE from queue 
+            WHERE userId = $1 AND tableId = $2""", uuid, tablenum
+        )
 
 
+async def setGameForTable(tablenum: str, game: str, ):
+    async with conn_pool.acquire() as conn:
+        response = await conn.execute("""UPDATE tables gameSelected = $1
+        WHERE tableId = $2""", game, tablenum
+        )
+        if not response.endswith("1"):
+            raise dbError(f"could not set game as {game} for {tablenum}")
 
+
+async def setMaxPlayersForTable(tablenum: str, max: str):
+    async with conn_pool.acquire() as conn:
+        response = await conn.execute("""
+        UPDATE tables max_players = $1 WHERE tableId = $2""", max, tablenum
+        )
