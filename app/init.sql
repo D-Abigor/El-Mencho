@@ -37,7 +37,7 @@ CREATE TABLE transactions(
  CREATE TABLE tables(
   tableId INT PRIMARY KEY,
   gameSelected TEXT CHECK (gameSelected IN ('Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s')),
-  status TEXT CHECK ( status IN ('waiting', 'active')),
+  status TEXT CHECK ( status IN ('idle', 'running', 'ended')),
   max_players INT
 )
 
@@ -46,12 +46,12 @@ INSERT INTO tables(
   tableId,gameSelected, status, max_players
   ) 
   VALUES 
-  ( 1,"Teen Patti","waiting",6)
-  (2,"Poker","waiting",6)
-  (3,"3 of spades","waiting",6)
-  (4,"Blackjack","waiting",6)
-  (5,"Rummy","waiting",6)
-  (6,"Crazy 8s","waiting",6)
+  ( 1,'Teen Patti','idle',6)
+  (2,'Poker','idle',6)
+  (3,'3 of spades','idle',6)
+  (4,'Blackjack','idle',6)
+  (5,'Rummy','idle',6)
+  (6,'Crazy 8s','idle',6)
 
 
 
@@ -60,7 +60,7 @@ CREATE TABLE activePlayers(
   tableId INT NOT NULL,
   betAmount INT NOT NULL,
   timeOfJoin TIMESTAMP DEFAULT now()
-  CONSTRAINT tableId_fkey FOREIGN KEY (tableId) REFERENCES tables(tableId)
+  CONSTRAINT tableId_fkey FOREIGN KEY (tableId) REFERENCES tables(tableId),
   CONSTRAINT userId_fkey FOREIGN KEY (userId) REFERENCES users(id)
 )
 
@@ -70,7 +70,7 @@ CREATE TABLE queue(
   userId uuid NOT NULL,
   timeOfJoin TIMESTAMP DEFAULT now(),
   readyToJoin BOOL NOT NULL DEFAULT FALSE,
-  CONSTRAINT tableId_fkey FOREIGN KEY (tableId) REFERENCES tables(tableId)
+  CONSTRAINT tableId_fkey FOREIGN KEY (tableId) REFERENCES tables(tableId),
   CONSTRAINT userId_fkey FOREIGN KEY (userId) REFERENCES users(id)
 )
 
@@ -91,5 +91,5 @@ CREATE TABLE gamePlayerLogs(
   timeOfFinish TIMESTAMP NOT NULL DEFAULT now(),
   CONSTRAINT gameId_fkey FOREIGN KEY (gameId) REFERENCES gamesPlayed(gameId),
   CONSTRAINT user_id_fkey FOREIGN KEY (userId) REFERENCES users(id),
-  CONSTRAINT finishTime_fkey FOREIGN KEY (timeOfFinish) REFERENCES gamesPlayed(timeOfFinish),
+  CONSTRAINT finishTime_fkey FOREIGN KEY (timeOfFinish) REFERENCES gamesPlayed(timeOfFinish)
 );
