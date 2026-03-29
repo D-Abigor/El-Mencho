@@ -48,7 +48,7 @@ class TableConfig(BaseModel):
 
 class GameResults(BaseModel):
     tablenum: str
-    results: dict                   # { player_uuid: final_amount }
+    results: dict                   # { player_uuid_str: final_amount }
 
 class QueueJoin(BaseModel):
     tablenum: str
@@ -66,8 +66,22 @@ def _redirect_login():
 
 # ---------------------- middleware ----------------------------#
 
-player_protected = ["/home", "/pay", "/payees", "/play", "/transfer", "/queue", "/gameConfirm"]
-manager_protected = ["/table"]
+# All paths that require a valid player session
+player_protected = [
+    "/home", "/pay", "/payees", "/play",
+    "/transfer", "/queue", "/gameConfirm",
+    "/queue/join", "/queue/leave",          # queue sub-routes also need auth
+]
+
+# All paths that require a valid manager session
+manager_protected = [
+    "/table",
+    "/table/configure",
+    "/table/confirmPlayers",
+    "/table/startGame",
+    "/table/endGame",
+    "/table/players",
+]
 
 
 @app.middleware("http")
@@ -98,23 +112,34 @@ async def validate_request(request: Request, call_next):
 
 @app.exception_handler(InvalidSession)
 async def invalid_session_handler(request: Request, exc: InvalidSession):
-    return pages.TemplateResponse(request, "error.html", {"message": exc.message})
+    return pages.TemplateResponse(
+        request, "error.html", {"message": exc.message}, status_code=401
+    )
 
 @app.exception_handler(dbError)
 async def db_error_handler(request: Request, exc: dbError):
-    return pages.TemplateResponse(request, "error.html", {"message": exc.message})
+    return pages.TemplateResponse(
+        request, "error.html", {"message": exc.message}, status_code=500
+    )
 
 @app.exception_handler(couldNotGetUsernameAvailability)
 async def username_availability_handler(request: Request, exc: couldNotGetUsernameAvailability):
-    return pages.TemplateResponse(request, "error.html", {"message": "Could not check username availability."})
+    return pages.TemplateResponse(
+        request, "error.html", {"message": "Could not check username availability."}, status_code=500
+    )
 
 @app.exception_handler(authenticationFailure)
 async def auth_failure_handler(request: Request, exc: authenticationFailure):
-    return pages.TemplateResponse(request, "error.html", {"message": exc.message})
+    # 401 lets fetch()-based callers detect failure vs success
+    return pages.TemplateResponse(
+        request, "error.html", {"message": exc.message}, status_code=401
+    )
 
 @app.exception_handler(transactionError)
 async def transaction_error_handler(request: Request, exc: transactionError):
-    return pages.TemplateResponse(request, "error.html", {"message": exc.message})
+    return pages.TemplateResponse(
+        request, "error.html", {"message": exc.message}, status_code=400
+    )
 
 
 # ----------------------- GET endpoints --------------------#
@@ -210,25 +235,25 @@ async def login_post(creds: LoginCredentials):
     session_token = await db.getSessionToken(
         username=creds.username, password=creds.password
     )
-    redirect = RedirectResponse(url="/home", status_code=303)
-    redirect.set_cookie(
+    # Return JSON — fetch() receives the Set-Cookie header directly on a 200
+    # response, so the browser stores the cookie before we navigate to /home.
+    # A RedirectResponse(303) would cause fetch() to silently drop the cookie.
+    response = JSONResponse({"ok": True})
+    response.set_cookie(
         key="session_token",
         value=str(session_token),
         httponly=True,
         samesite="lax",
     )
-    return redirect
+    return response
 
 
 @app.post("/transfer")
 async def transfer_post(request: Request, details: TransferDetail):
     session_token = request.state.session_token
     await db.transfer(session_token, details.recepient, details.amount)
-    return pages.TemplateResponse(
-        request,
-        "success.html",
-        {"message": f"Successfully sent {details.amount} credits to {details.recepient}."}
-    )
+    # Return JSON so the fetch()-based pay.html can handle it inline
+    return JSONResponse({"ok": True, "message": f"Successfully sent {details.amount} credits to {details.recepient}."})
 
 
 @app.post("/queue/join")
@@ -241,11 +266,11 @@ async def join_queue(request: Request, body: QueueJoin):
 @app.post("/queue/leave")
 async def leave_queue(request: Request, body: QueueJoin):
     session_token = request.state.session_token
+    user_uuid = await db._uuidFromSession(session_token)
     async with db.conn_pool.acquire() as conn:
-        uuid = await db._uuidFromSession(session_token)
         await conn.execute(
             "DELETE FROM queue WHERE userid = $1 AND tableid = $2;",
-            uuid, int(body.tablenum)
+            user_uuid, int(body.tablenum)
         )
     return JSONResponse({"status": "left"})
 
@@ -259,21 +284,25 @@ async def confirm_participation(request: Request, participation: ParticipationCo
         confirmation=participation.confirmation,
         betAmount=participation.betAmount,
     )
-    return RedirectResponse(url="/play", status_code=303)
+    # Return JSON — the frontend uses fetch() and checks res.ok, then navigates
+    return JSONResponse({"ok": True})
 
 
 @app.post("/game")
 async def play_post(request: Request, details: GameBet):
     session_token = request.state.session_token
     await db.insertIntoQueue(session_token=session_token, tablenum=details.tablenum)
-    return pages.TemplateResponse(
-        request,
-        "success.html",
-        {"message": f"You've joined the queue for table {details.tablenum}. Good luck!"}
-    )
+    return JSONResponse({"ok": True, "message": f"You've joined the queue for table {details.tablenum}. Good luck!"})
 
 
-# ----------------------- Manager-only POST endpoints -------------------#
+# ----------------------- Manager-only endpoints -------------------#
+
+@app.get("/table/players")
+async def get_table_players(request: Request, tablenum: str = "1"):
+    """Returns {uuid: username} for active players — used by end-game UI."""
+    players = await db.getActivePlayers(tablenum)
+    return JSONResponse(players)
+
 
 @app.post("/table/configure")
 async def configure_table(request: Request, config: TableConfig):

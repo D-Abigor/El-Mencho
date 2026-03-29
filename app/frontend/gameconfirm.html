@@ -101,7 +101,7 @@
               </div>
 
               <div class="confirm-actions">
-                <button type="submit" name="action" value="confirm" class="btn btn-gold" onclick="this.form.action_val='confirm'">
+                <button type="submit" class="btn btn-gold">
                   I'm In
                 </button>
                 <button type="button" class="btn btn-red" onclick="submitDecline('{{ item.tableId }}')">
@@ -141,13 +141,16 @@
     async function submitDecline(tablenum) {
       const payload = { tablenum: String(tablenum), confirmation: false, betAmount: "0" };
       try {
-        await fetch('/gameConfirm', {
+        const res = await fetch('/gameConfirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
+        // Whether ok or not, reload to reflect updated state
         window.location.reload();
-      } catch(e) { /* ignore */ }
+      } catch (e) {
+        window.location.reload();
+      }
     }
 
     async function postConfirm(payload, fb, btns) {
@@ -161,6 +164,7 @@
           fb.style.display = 'block';
           fb.className = 'alert alert-success';
           fb.textContent = '✓ Seat confirmed! Good luck.';
+          // Navigate to play after a short pause so the user sees the confirmation
           setTimeout(() => window.location.href = '/play', 1200);
         } else {
           fb.style.display = 'block';
@@ -168,7 +172,7 @@
           fb.textContent = '✗ Could not confirm. Check your balance.';
           btns.forEach(b => b.disabled = false);
         }
-      } catch(err) {
+      } catch (err) {
         fb.style.display = 'block';
         fb.className = 'alert alert-error';
         fb.textContent = 'Network error.';

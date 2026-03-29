@@ -107,35 +107,38 @@
       const btn = e.target.querySelector('button[type=submit]');
       btn.disabled = true; btn.textContent = 'Sending…';
 
-      const payload = {
-        recepient: document.getElementById('recepient').value,
-        amount: parseInt(document.getElementById('amount').value),
-      };
+      const recepient = document.getElementById('recepient').value;
+      const amount    = parseInt(document.getElementById('amount').value);
 
       const fb = document.getElementById('feedback');
+
       try {
         const res = await fetch('/transfer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ recepient, amount }),
         });
+
+        // Backend now returns JSON for both success and error paths
         if (res.ok) {
+          const data = await res.json();
           fb.style.display = 'block';
           fb.className = 'alert alert-success';
-          fb.textContent = `✓ ${payload.amount} credits sent to ${payload.recepient}`;
+          fb.textContent = `✓ ${data.message}`;
           e.target.reset();
-          document.getElementById('recepient').value = payload.recepient;
+          document.getElementById('recepient').value = recepient;
         } else {
-          const text = await res.text();
+          // Error page HTML returned with non-2xx status — display inline message
           fb.style.display = 'block';
           fb.className = 'alert alert-error';
-          fb.textContent = '✗ Transfer failed. ' + (res.statusText || '');
+          fb.textContent = '✗ Transfer failed. Check the recipient and your balance.';
         }
       } catch (err) {
         fb.style.display = 'block';
         fb.className = 'alert alert-error';
         fb.textContent = 'Network error. Please try again.';
       }
+
       btn.disabled = false; btn.textContent = 'Send';
     });
   </script>

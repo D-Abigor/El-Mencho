@@ -212,21 +212,16 @@
           <!-- Start / End game -->
           <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
             <button class="btn btn-gold" onclick="startGame()" style="flex:1;">▶ Start Game</button>
-            <button class="btn btn-red" onclick="toggleEndForm()" style="flex:1;">■ End Game</button>
+            <button class="btn btn-red" onclick="openEndForm()" style="flex:1;">■ End Game</button>
           </div>
 
-          <!-- End game results form -->
+          <!-- End game results form — populated dynamically with real UUIDs -->
           <div class="result-form" id="resultForm">
             <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:0.75rem; font-style:italic;">
               Enter each player's final payout:
             </p>
             <div class="result-entries" id="resultEntries">
-              {% for username, bet in players.items() %}
-                <div class="result-entry" data-uuid="">
-                  <label>{{ username }}</label>
-                  <input type="number" min="0" placeholder="final ¢" class="final-amt" />
-                </div>
-              {% endfor %}
+              <!-- Populated by openEndForm() via /table/players API -->
             </div>
             <button class="btn btn-red" onclick="endGame()" style="width:100%;">Confirm Results</button>
           </div>
@@ -250,7 +245,7 @@
       return res;
     }
 
-    function feedback(msg, type='success') {
+    function feedback(msg, type = 'success') {
       const el = document.getElementById('ctrlFeedback');
       el.style.display = 'block';
       el.className = `alert alert-${type}`;
@@ -279,25 +274,67 @@
       else        { feedback('✗ Could not start game.', 'error'); }
     }
 
-    function toggleEndForm() {
-      const f = document.getElementById('resultForm');
-      f.classList.toggle('open');
+    // Fetch the live uuid→username map from the server, then render the end-game form.
+    // This is the only correct way to get UUIDs client-side — the Jinja template only
+    // has username→bet, not uuid→username.
+    async function openEndForm() {
+      const form = document.getElementById('resultForm');
+      const entries = document.getElementById('resultEntries');
+
+      // Fetch current active players with their UUIDs
+      try {
+        const res = await fetch(`/table/players?tablenum=${tablenum}`);
+        if (!res.ok) {
+          feedback('✗ Could not load player list.', 'error');
+          return;
+        }
+        const uuidToUsername = await res.json(); // { uuid: username, ... }
+
+        entries.innerHTML = '';
+        const uuids = Object.keys(uuidToUsername);
+        if (uuids.length === 0) {
+          feedback('No active players to pay out.', 'error');
+          return;
+        }
+        uuids.forEach(uuid => {
+          const username = uuidToUsername[uuid];
+          const div = document.createElement('div');
+          div.className = 'result-entry';
+          div.dataset.uuid = uuid;
+          div.innerHTML = `
+            <label>${username}</label>
+            <input type="number" min="0" placeholder="final ¢" class="final-amt" />
+          `;
+          entries.appendChild(div);
+        });
+
+        form.classList.add('open');
+      } catch (err) {
+        feedback('✗ Network error loading players.', 'error');
+      }
     }
 
     async function endGame() {
-      const entries = document.querySelectorAll('#resultEntries .result-entry');
+      const entryEls = document.querySelectorAll('#resultEntries .result-entry');
       const results = {};
-      // Note: UUIDs aren't available client-side here; manager should enter payouts
-      // by username. The backend currently expects uuid keys — this is a simplification.
-      // In production, a /table/players API call would return uuid→username mapping.
-      entries.forEach(entry => {
+      let valid = true;
+      entryEls.forEach(entry => {
         const uuid = entry.dataset.uuid;
         const amt  = entry.querySelector('.final-amt').value;
-        if (uuid && amt) results[uuid] = parseInt(amt);
+        if (!uuid || amt === '') { valid = false; return; }
+        results[uuid] = parseInt(amt);
       });
+      if (!valid || Object.keys(results).length === 0) {
+        feedback('✗ Fill in all payout amounts before confirming.', 'error');
+        return;
+      }
       const res = await api('/table/endGame', { tablenum, results });
-      if (res.ok) { feedback('✓ Game ended and results saved.'); setTimeout(() => window.location.reload(), 1500); }
-      else        { feedback('✗ Could not end game.', 'error'); }
+      if (res.ok) {
+        feedback('✓ Game ended and results saved.');
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        feedback('✗ Could not end game.', 'error');
+      }
     }
   </script>
 </body>

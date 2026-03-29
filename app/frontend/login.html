@@ -99,7 +99,7 @@
     </div>
 
     <div class="login-card">
-      <form action="/login" method="post" id="loginForm">
+      <form id="loginForm">
         <div class="form-group">
           <label for="username">Player Handle</label>
           <input
@@ -124,6 +124,8 @@
           />
         </div>
 
+        <div id="loginError" style="display:none; margin-bottom:1rem;"></div>
+
         <div class="form-footer">
           <button type="submit" class="btn btn-gold">Take a Seat</button>
         </div>
@@ -134,12 +136,13 @@
   </div>
 
   <script>
-    // Convert form to JSON POST to match FastAPI's JSON body expectation
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector('button[type=submit]');
+      const errEl = document.getElementById('loginError');
       btn.disabled = true;
       btn.textContent = 'Dealing…';
+      errEl.style.display = 'none';
 
       const payload = {
         username: document.getElementById('username').value,
@@ -147,19 +150,31 @@
       };
 
       try {
+        // Use redirect:'manual' so fetch() never follows the redirect internally.
+        // The server now returns 200 JSON on success, so the browser stores the
+        // Set-Cookie header directly (it only drops cookies on redirected responses).
         const res = await fetch('/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
-          redirect: 'follow',
+          redirect: 'manual',
         });
-        if (res.ok || res.redirected) {
-          window.location.href = res.url || '/home';
+
+        if (res.ok) {
+          // Cookie is now stored — navigate to home
+          window.location.href = '/home';
         } else {
-          const text = await res.text();
-          document.body.innerHTML = text;
+          // 401 from authenticationFailure handler — show inline error
+          errEl.style.display = 'block';
+          errEl.className = 'alert alert-error';
+          errEl.textContent = '✗ Invalid username or password.';
+          btn.disabled = false;
+          btn.textContent = 'Take a Seat';
         }
       } catch (err) {
+        errEl.style.display = 'block';
+        errEl.className = 'alert alert-error';
+        errEl.textContent = 'Network error. Please try again.';
         btn.disabled = false;
         btn.textContent = 'Take a Seat';
       }
