@@ -335,10 +335,6 @@ async def getUserQueue(session_token):
     return cleanedUserQueue
 
 
-async def removeFromQueue(username: str, game: str):
-    uuid = _getuuid(username)
-    async with conn_pool.acquire() as conn:
-        row = conn.execute("DELETE FROM queue WHERE userId = $1 AND game = $2 ;", uuid, game)
 
 
 async def insertIntoQueue(session_token: str, tablenum: str):
@@ -382,6 +378,12 @@ async def getParticipation(session_token: str):
         SELECT """)
 
 
+#------------- functions serving manager GET endpoints --------------#
+
+
+
+async def 
+
 #------------- functions serving manager POST endpoints -------------#
 
 async def setTableConfiguration(tablename, game, maxPlayers):
@@ -397,29 +399,52 @@ async def setTableConfiguration(tablename, game, maxPlayers):
 async def endGame(result, tablenum: str):
     # ccleaning up game table from the previous game, setting correct balances according to win or lose
     async with conn_pool.acquire() as conn:
-        game = conn.fetchrow("""
-        SELECT gameSelected AS game FROM tables WHERE tableId = $1""", tablenum)
-        conn.execute("""
-        INSERT INTO gamesPlayed(game,tableId) VALUES($1,$2)""", game["game"], tablenum)
-        gameId = conn.fetchrow("""
-        SELECT gameID from gamesPlayed WHERE """)
-        for players in result:              # players -> {username: final amount}
-            initialBet = await conn.fetchrow("""
-            SELECT a.betAmount AS betAmount, u.id AS uuid 
-            FROM activePlayers a JOIN users u ON a.userId = u.id 
-            WHERE u.username = $1;""", players)
-            change = result["players"] - initialBet["betAmount"]
-            if change < 0:
-                await conn.execute("""
-                UPDATE accounts SET balance = balance - $1 WHERE user_id = $2""",
-                change, initialBet["uuid"])
-            else:
-                await conn.execute("""
-                UPDATE accounts SET balance = balance + $1 WHERE user_id = $2""",
-                change, initialBet["uuid"])
-            
-            conn.execute("""
-            INSERT INTO gamePlayerLogs(gameId, userId, initialBet, finalAmount) VALUES($1,$2,$3,$4)"""
-            )
-        conn.execute("DELETE FROM activePlayers WHERE tableId = $1", tablenum)
+        async with conn.transaction():
+            row = await conn.fetchrow("""
+                INSERT INTO gamesPlayed(game, tableId)
+                SELECT gameSelected, tableId
+                FROM tables
+                WHERE tableId = $1
+                RETURNING gameId, game;
+            """, table_id)
+            game_id = row["gameId"]
+
+            players = await conn.fetch("""
+                SELECT u.username, u.id, a.betAmount
+                FROM activePlayers a
+                JOIN users u ON u.id = a.userId
+                WHERE a.tableId = $1;
+            """, table_id)
+
+            balance_updates = []
+            logs = []
+
+            for p in players:
+                final_amount = result[p["username"]]
+                initial = p["betamount"]
+                change = final_amount - initial
+
+                balance_updates.append((change, p["id"]))
+                logs.append((game_id, p["id"], initial, final_amount))
+
+            await conn.executemany("""
+                UPDATE accounts
+                SET balance = balance + $1
+                WHERE user_id = $2;
+            """, balance_updates)
+
+            await conn.executemany("""
+                INSERT INTO gamePlayerLogs(gameId, userId, initialBet, finalAmount)
+                VALUES ($1, $2, $3, $4);
+            """, logs)
+
+            await conn.execute("""
+                DELETE FROM activePlayers WHERE tableId = $1;
+            """, table_id)
+
+async def removeFromQueue(username: str, tablenum: str):
+    async with conn_pool.acquire() as conn:
+        row = conn.execute("""DELETE FROM queue q JOIN users u 
+        ON q.userId = u.id WHERE u.username = $1 AND tableId = $2 ;""",
+        username, tablenum)
 

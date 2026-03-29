@@ -170,8 +170,8 @@ async def play(request: Request):
   return response
 
 @app.get("/table")
-async def getTables(request: Request, game: str = None):
-  game  = await db.getManagerHome(game)
+async def getTables(request: Request, tablenum: str = 1):
+  game  = await db.getManagerHome(tablenum)
   response = pages.TemplateResponse(
     "table.html",
     {
