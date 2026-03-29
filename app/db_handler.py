@@ -1,6 +1,7 @@
 import asyncpg
 import asyncio
 import os
+import uuid
 from dotenv import load_dotenv
 from passlib.hash import bcrypt
 from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability, authenticationFailure, transactionError
@@ -35,34 +36,34 @@ async def _getuuid(username: str) -> str:
         )
         if not row:
             raise dbError("Internal db error - could not get corresponding uuid for your username")
-        return str(row["id"])
+        return row["id"]   # keep as uuid.UUID
 
 
-async def _uuidFromSession(session_token: str) -> str:
+async def _uuidFromSession(session_token: str):
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             """SELECT user_id FROM sessions
                WHERE session_token = $1 AND expires_at > NOW();""",
-            session_token,
+            uuid.UUID(session_token),
         )
         if not row:
             raise InvalidSession("Session is invalid or has expired.")
-        return str(row["user_id"])
+        return row["user_id"]   # keep as uuid.UUID — asyncpg needs the native type
 
 
-async def _getUsernameFromUuid(uuid: str) -> str:
+async def _getUsernameFromUuid(uuid_val) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT username FROM users WHERE id = $1;", uuid
+            "SELECT username FROM users WHERE id = $1;", uuid_val
         )
         if not row:
             raise dbError("Internal db error - could not get corresponding username from uuid")
         return row["username"]
 
-async def _getTeamnameFromUuid(uuid: str) -> str:
+async def _getTeamnameFromUuid(uuid_val) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT affiliation FROM users WHERE id = $1;", uuid
+            "SELECT affiliation FROM users WHERE id = $1;", uuid_val
         )
         if not row:
             raise dbError("Internal db error - could not get corresponding teamname from uuid")
@@ -125,13 +126,17 @@ def _cleanUserQueue(activeQueue: list):
 async def validate(session_token: str, role: str) -> bool:
     if not session_token:
         return False
+    try:
+        token_uuid = uuid.UUID(session_token)
+    except ValueError:
+        return False
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             """SELECT u.access
                FROM sessions s
                JOIN users u ON s.user_id = u.id
                WHERE s.session_token = $1 AND s.expires_at > NOW();""",
-            session_token,
+            token_uuid,
         )
     return bool(row and row["access"] == role)
 
@@ -186,7 +191,7 @@ async def getSessionToken(username: str, password: str):
 async def deleteSessionToken(session_token: str):
     async with conn_pool.acquire() as conn:
         await conn.execute(
-            "DELETE FROM sessions WHERE session_token = $1;", session_token
+            "DELETE FROM sessions WHERE session_token = $1;", uuid.UUID(session_token)
         )
 
 async def transfer(session_id: str, destination_username: str, amount):
@@ -206,7 +211,7 @@ async def transfer(session_id: str, destination_username: str, amount):
     async with conn_pool.acquire() as conn:
         try:
             async with conn.transaction():
-                ids = sorted([str(source_uuid), str(dest_uuid)])
+                ids = sorted([source_uuid, dest_uuid], key=lambda x: str(x))
                 await conn.fetchrow(
                     "SELECT balance FROM accounts WHERE user_id = $1 FOR UPDATE;",
                     ids[0],
