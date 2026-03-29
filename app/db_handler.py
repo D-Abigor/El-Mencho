@@ -252,7 +252,7 @@ async def transfer(session_id: str, destination_username: str, amount):
 
 async def getPlayerHome(session_token):
 # return affiliated teamname, credits belonging to the user, total team credits, list of transactions and game logs
-    userid = _getuuid(session_token)
+    userid = _uuid_from_session(session_token)
     async with conn_pool.acquire() as conn:
         # combine queries into 1 if time allows
         userDetails = await conn.fetchrow(
@@ -288,7 +288,6 @@ async def getPlayerHome(session_token):
         }
 
 
-#### rewrite
 async def getTableDetails(tablenum: str):
 # return  queue data, players currently playing, player bets, 
     async with conn_pool.acquire() as conn:
@@ -314,7 +313,7 @@ async def getTableDetails(tablenum: str):
 
 
 async def getUserQueue(session_token):
-# return json with game name and their current status in q, total q length
+# return json with tablenum, game name and their current position in q, total q length, ready to join
     async with conn_pool.acquire() as conn:
         activeQueues = conn.fetch("""
         SELECT gameSelected AS game, position
@@ -343,7 +342,7 @@ async def removeFromQueue(username: str, game: str):
 
 
 async def insertIntoQueue(session_token: str, tablenum: str):
-    userId = _getuuid(session_token)
+    userId = _uuid_from_session(session_token)
     async with conn_pool.acquire() as conn:
         row = await conn.execute("""
         INSERT INTO queue(tableId,userId) 
@@ -359,14 +358,14 @@ async def endGame(results, tablenum: str):
 async def confirmPlayers(numberOfPlayers, tablenum: str):
     # function to pick numberOfPlayers from queue and prepare to push into game table
 
-async def confirmParticipation(session_token, tablenum: str, confirmation: bool):
+async def confirmParticipation(session_token, tablenum: str, confirmation: bool, betAmount: str):
     # to get user confirmation before moving the player into game table, dropped from queue otherwise
-    uuid = _getuuid(session_token)
+    uuid = _uuid_from_session(session_token)
     async with conn_pool.acquire() as conn:
         if confirmation:
             response = await conn.execute("""
-            UPDATE queue markedReady = TRUE 
-            WHERE userId = $1 AND tableId = $2""",uuid, tablenum
+            INSERT INTO activePlayers( userId, tableId, betAmount)
+            VALUES($1,$2,$3)""",uuid, tablenum, betAmount
             )
             if not response.endswith("1"):
                 raise dbError(f"could not get confirmation for {tablenum}")
@@ -391,3 +390,8 @@ async def setMaxPlayersForTable(tablenum: str, max: str):
         response = await conn.execute("""
         UPDATE tables max_players = $1 WHERE tableId = $2""", max, tablenum
         )
+
+async def getParticipation(session_token: str):
+    async with conn_pool.acquire() as conn:
+        response = await conn.fetch("""
+        SELECT """)

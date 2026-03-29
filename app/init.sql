@@ -106,6 +106,7 @@ CREATE TABLE queue(
   tableId INT NOT NULL,
   userId uuid NOT NULL,
   timeOfJoin TIMESTAMP DEFAULT now(),
+  readyToJoin BOOL NOT NULL DEFAULT FALSE,
   CONSTRAINT tableId_fkey FOREIGN KEY (tableId) REFERENCES tables(tableId)
   CONSTRAINT userId_fkey FOREIGN KEY (userId) REFERENCES users(id)
 )
