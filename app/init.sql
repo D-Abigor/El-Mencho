@@ -36,7 +36,7 @@ CREATE TABLE transactions(
 
  CREATE TABLE tables(
   tableId INT PRIMARY KEY,
-  gameSelected TEXT CHECK (gameSelected IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s', '')),
+  gameSelected TEXT CHECK (gameSelected IN ('Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s')),
   status TEXT CHECK ( status IN ('waiting', 'active')),
   max_players INT
 )
@@ -46,49 +46,12 @@ INSERT INTO tables(
   tableId,gameSelected, status, max_players
   ) 
   VALUES 
-  (
-    1,"","waiting",6
-  )
-
-INSERT INTO tables( 
-  tableId,gameSelected, status, max_players
-  ) 
-  VALUES 
-  (
-    2,"","waiting",6
-  )
-
-INSERT INTO tables( 
-  tableId,gameSelected, status, max_players
-  ) 
-  VALUES 
-  (
-    3,"","waiting",6
-  )
-
-INSERT INTO tables( 
-  tableId,gameSelected, status, max_players
-  ) 
-  VALUES 
-  (
-    4,"","waiting",6
-  )
-
-INSERT INTO tables( 
-  tableId,gameSelected, status, max_players
-  ) 
-  VALUES 
-  (
-    5,"","waiting",6
-  )
-
-INSERT INTO tables( 
-  tableId,gameSelected, status, max_players
-  ) 
-  VALUES 
-  (
-    6,"","waiting",6
-  )
+  ( 1,"Teen Patti","waiting",6)
+  (2,"Poker","waiting",6)
+  (3,"3 of spades","waiting",6)
+  (4,"Blackjack","waiting",6)
+  (5,"Rummy","waiting",6)
+  (6,"Crazy 8s","waiting",6)
 
 
 

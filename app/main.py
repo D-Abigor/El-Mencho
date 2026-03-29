@@ -7,14 +7,15 @@ from pydantic import BaseModel
 from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability
 
   
-app = FastAPI(lifespan=lifespan)
-pages = Jinja2Templates(directory="frontend")
- 
-
 @asynccontextmanager
 def lifespan(app: FastAPI):
     db.init_conn_pool_and_cleaner()
     yield
+
+app = FastAPI(lifespan=lifespan)
+pages = Jinja2Templates(directory="frontend")
+ 
+
   
 #------------------ data models to validate response ------------------#
 
@@ -36,7 +37,14 @@ class participationConfirm(BaseModel):
   game: str
   confirmation: bool
 
+class tableConfig(BaseModel):
+  tablenum: str
+  game: str
+  maxPlayers: str
 
+class gameResults(BaseModel):
+    tablenum: str
+    results: dict                   # { player_username: final_amount }
 
 #------------------ Internal helper function ---------------------------#
 
@@ -199,7 +207,7 @@ async def confirmParticipation(request: Request, participation: participationCon
 
 
 @app.post("/login")
-async def login_post(creds: login, response: Response):
+async def login_post(creds: login, request: Request):
   username = creds.username
   password = creds.password
   session_token = await db.getSessionToken(
@@ -217,7 +225,7 @@ async def login_post(creds: login, response: Response):
 
 
 @app.post("/transfer")
-async def transfer_post(details: transferDetail, response: Response):
+async def transfer_post(details: transferDetail, request: Request):
   session_id = request.state.session_token
   message = await db.transfer(
       session_id, details.recepient, details.amount
@@ -234,9 +242,24 @@ async def play_post(details: game, response: Response):
 
 
 
+#----------------POST FOR MANAGERS -----------------#
 
 
+@app.post("/table/config")
+async def configureTable(request: Request, configuration: tableConfig):
+  tablename = configuration.tablename
+  game = configuration.game
+  maxPlayers = configuration.maxPlayers
+  status = await db.setTableConfiguration(tablename = tablename, game = game, maxPlayers=maxPlayers)
+  return JSONResponse(status)
 
+
+@app.post("/table/results")
+async def configureTable(request: Request, result: gameResults):
+  tablenum = result.tablenum
+  result = result.results
+  status = await db.endGame(tablenum = tablenum, result = result )
+  return JSONResponse(status)
 
 
 
