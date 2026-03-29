@@ -249,6 +249,9 @@ async def transfer(session_id: str, destination_username: str, amount):
         except Exception as e:
             raise transactionError(f"Transaction failed: {str(e)}")
 
+
+
+##### rewrite
 async def getPlayerHome(session_token):
 # return affiliated teamname, credits belonging to the user, total team credits, list of transactions and game logs
     userid = _getuuid(session_token)
@@ -284,6 +287,8 @@ async def getPlayerHome(session_token):
         "gamelogs": convertedLogs 
         }
 
+
+#### rewrite
 async def getManagerHome(game: str):
 # return  queue data, players currently playing, player bets, 
     async with conn_pool.acquire() as conn:
@@ -306,6 +311,9 @@ async def getManagerHome(game: str):
         "players": playersCleaned
     }
 
+
+
+###### rewrite
 async def getUserQueue(session_token):
 # return json with game name and their current status in q, total q length
     async with conn_pool.acquire() as conn:
@@ -324,7 +332,7 @@ async def getUserQueue(session_token):
 
 
 
-
+##### rewrite
 async def removeFromQueue(username: str, game: str):
     uuid = _getuuid(username)
     async with conn_pool.acquire() as conn:
@@ -346,4 +354,3 @@ async def confirmParticipation(session_token, game: str, confirmation: bool):
 
 
 
- 

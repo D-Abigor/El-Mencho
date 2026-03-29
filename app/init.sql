@@ -31,13 +31,9 @@ CREATE TABLE transactions(
 
 
 
-CREATE TABLE gamesPlayed(
-  gameId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  game TEXT NOT NULL,
-  timeOfFinish TIMESTAMP DEFAULT now(),
-  winner UUID NOT NULL,
-  CONSTRAINT winner_fkey FOREIGN KEY REFERENCES users(id)
-);
+
+
+
 
 CREATE TABLE activeGames(
   user_id uuid PRIMARY KEY,
@@ -45,7 +41,6 @@ CREATE TABLE activeGames(
   game TEXT NOT NULL CHECK ( game IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s')),
   CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
 
 CREATE TABLE gamePlayers(
   ID SERIAL PRIMARY KEY, 
@@ -68,3 +63,101 @@ CREATE TABLE queue(
   CONSTRAINT user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
  
+
+
+
+ CREATE TABLE tables(
+  tableId INT PRIMARY KEY DEFAULT,
+  gameSelected TEXT CHECK (gameSelected IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s', '')),
+  status TEXT CHECK ( status IN ('waiting', 'active')),
+  max_players INT
+)
+
+-- adding pre baked tables
+INSERT INTO tables( 
+  tableId,gameSelected, status, max_players
+  ) 
+  VALUES 
+  (
+    1,"","waiting",6
+  )
+
+INSERT INTO tables( 
+  tableId,gameSelected, status, max_players
+  ) 
+  VALUES 
+  (
+    2,"","waiting",6
+  )
+
+INSERT INTO tables( 
+  tableId,gameSelected, status, max_players
+  ) 
+  VALUES 
+  (
+    3,"","waiting",6
+  )
+
+INSERT INTO tables( 
+  tableId,gameSelected, status, max_players
+  ) 
+  VALUES 
+  (
+    4,"","waiting",6
+  )
+
+INSERT INTO tables( 
+  tableId,gameSelected, status, max_players
+  ) 
+  VALUES 
+  (
+    5,"","waiting",6
+  )
+
+INSERT INTO tables( 
+  tableId,gameSelected, status, max_players
+  ) 
+  VALUES 
+  (
+    6,"","waiting",6
+  )
+
+
+
+CREATE TABLE activePlayers(
+  userId uuid PRIMARY KEY,
+  tableId INT NOT NULL,
+  betAmount INT NOT NULL,
+  timeOfJoin TIMESTAMP DEFAULT now()
+  CONSTRAINT tableId_fkey FOREIGN KEY (tableId) REFERENCES tables(tableId)
+  CONSTRAINT userId_fkey FOREIGN KEY (userId) REFERENCES users(id)
+)
+
+CREATE TABLE queue(
+  number SERIAL PRIMARY KEY,
+  tableId INT NOT NULL,
+  userId uuid NOT NULL,
+  timeOfJoin TIMESTAMP DEFAULT now(),
+  CONSTRAINT tableId_fkey FOREIGN KEY (tableId) REFERENCES tables(tableId)
+  CONSTRAINT userId_fkey FOREIGN KEY (userId) REFERENCES users(id)
+)
+
+CREATE TABLE gamesPlayed( -- logs of all the games that were played
+  gameId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game TEXT NOT NULL,
+  tableId INT NOT NULL,
+  timeOfFinish TIMESTAMP DEFAULT now(),
+  CONSTRAINT tableId_fkey FOREIGN KEY tableId REFERENCES tables(tableId)
+);
+
+CREATE TABLE gamePlayerLogs(
+  ID SERIAL PRIMARY KEY, 
+  gameId UUID NOT NULL,
+  userId UUID NOT NULL,
+  initialBet INT NOT NULL,
+  finalAmount INT NOT NULL CHECK ( final_amount >= 0),
+  timeOfFinish TIMESTAMP NOT NULL DEFAULT now(),
+  CONSTRAINT gameId_fkey FOREIGN KEY (gameId) REFERENCES gamesPlayed(gameId),
+  CONSTRAINT user_id_fkey FOREIGN KEY (userId) REFERENCES users(id),
+  CONSTRAINT finishTime_fkey FOREIGN KEY (timeOfFinish) REFERENCES gamesPlayed(timeOfFinish),
+);

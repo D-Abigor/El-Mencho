@@ -9,7 +9,7 @@ from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability
   
 app = FastAPI(lifespan=lifespan)
 pages = Jinja2Templates(directory="frontend")
-
+ 
 
 @asynccontextmanager
 def lifespan(app: FastAPI):
