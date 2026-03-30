@@ -623,7 +623,7 @@ async def getQueueAndActivePlayers(tableId):
         JOIN users u ON u.id = a.userid
         WHERE a.tableid = $1
         """,
-        table_id
+        tableId
         )
 
         queue_rows = await conn.fetch(
@@ -634,7 +634,7 @@ async def getQueueAndActivePlayers(tableId):
         WHERE q.tableid = $1
         ORDER BY q.number ASC
         """,
-        table_id
+        tableId
         )
     return {
         "players": { row["username"]: row["betamount"] for row in players_rows },
