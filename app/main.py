@@ -71,11 +71,9 @@ protected = ["/home", "/pay", "/payees", "/play", "/transfer", "/queue", "/gameC
 @app.middleware("http")
 async def validate_request(request: Request, call_next):
     session_token = request.cookies.get("session_token")
-    print("Session token", session_token)
     path = request.url.path
 
     if path in protected:
-        print("path detected as protected")
         status = await db.validate(session_token=session_token, role="player")
         if not status:
             return pages.TemplateResponse(
@@ -83,11 +81,10 @@ async def validate_request(request: Request, call_next):
                 {"request": request, "message": "Invalid or expired session"},
                 status_code=401
             )
+        else:
+            access = 'player'
 
     elif path == "/tables" or path.startswith("/table/"):
-        print("path detected as manager level")
-        # FIX: /tables (manager overview) was not covered by path.startswith("/table/")
-        # FIX: /table/{tableId}/start was missing from the old managerEndpoints list
         status = await db.validate(session_token=session_token, role="manager")
         if not status:
             return pages.TemplateResponse(
@@ -95,8 +92,11 @@ async def validate_request(request: Request, call_next):
                 {"request": request, "message": "Invalid or expired session"},
                 status_code=401
             )
+        else:
+            access = 'manager'
 
     request.state.session_token = session_token
+    request.state.access = access
     response = await call_next(request)
     return response
 
@@ -206,19 +206,23 @@ async def checkParticipation(request: Request):
 
 @app.post("/login")
 async def login_post(creds: login, request: Request):
-    print("receieved post at /login")
     session_token = await db.getSessionToken(
         username=creds.username, password=creds.password
     )
-    print("session_token from login", session_token)
-    redirect = RedirectResponse(url="/home", status_code=303)
-    redirect.set_cookie(
-        key="session_token",
-        value=str(session_token),
-        httponly=True,
-        samesite="lax",
-    )
-    return redirect
+    if session_token:
+        access = await db.getAccess(session_token)
+        if access = 'player':
+            redirect = RedirectResponse(url="/home", status_code=303)
+        else:
+            redirect = RedirectResponse(url="/tables", status_code=303)
+        redirect.set_cookie(
+            key="session_token",
+            value=str(session_token),
+            httponly=True,
+            samesite="lax",
+            secure=True
+        )
+        return redirect
 
 @app.post("/transfer")
 async def transfer_post(details: transferDetail, request: Request):

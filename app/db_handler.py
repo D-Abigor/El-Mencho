@@ -223,6 +223,11 @@ async def deleteSessionToken(session_token: str):
         )
 
 
+async def getAccess(session_token: str):
+    async with conn_pool.acquire() as conn:
+        row = conn.fetchrow("""SELECT u.access AS access FROM users u JOIN sessions s ON u.id = s.user_id WHERE s.session_token = $1;""", session_token)
+        return row["access"]
+
 async def transfer(session_id: str, destination_username: str, amount):
     # validate transfer amount
     try:
