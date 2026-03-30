@@ -45,7 +45,17 @@ class tableConfig(BaseModel):
 class gameResults(BaseModel):
     tablenum: str
     results: dict                   # { player_username: final_amount }
+  
+class playerPullDetails(BaseModel):
+  tableId: str
 
+class removeFromQueueDetails(BaseModel):
+  tableId: str
+  username: str
+
+
+class tableNum(BaseModel):
+  tableId: str
 #------------------ Internal helper function ---------------------------#
 
 def _redirect_login():
@@ -254,13 +264,34 @@ async def configureTable(request: Request, configuration: tableConfig):
   return JSONResponse(status)
 
 
-@app.post("/table/results")
+@app.post("/table/end")
 async def configureTable(request: Request, result: gameResults):
   tablenum = result.tablenum
   result = result.results
   status = await db.endGame(tablenum = tablenum, result = result )
   return JSONResponse(status)
 
+@app.post("/table/pull")
+async def pullPlayers(request: Request, pullDetails: playerPullDetails):
+  tableId = pullDetails.tableId
+  status = await db.confirmPlayers( tablenum=tableId)
+
+@app.post("/table/start")
+
+
+@app.post("/table/flush")
+async def flushTable(request: Request, tablenum: Tablenum):
+  tableId = tablenum.tableId
+  status  = db.flushTable(tableId = tableID)
+  return JSONResponse(status)
+
+
+@app.post("/queue/remove")
+async def removeFromQueue(request: Request, removePlayer: removeFromQueueDetails):
+  username = removePlayer.username
+  tableId = removePlayer.tableId
+  status = await db.removeFromQueue(username = username, tablenum = tableId)
+  return JSONResponse(status)
 
 
 

@@ -350,8 +350,7 @@ async def startGame(players, tablenum: str):
 
 
 
-async def confirmPlayers(numberOfPlayers, tablenum: str):
-    # function to pick numberOfPlayers from queue and prepare to push into game table
+
 
 async def confirmParticipation(session_token, tablenum: str, confirmation: bool, betAmount: str):
     # to get user confirmation before moving the player into game table, dropped from queue otherwise
@@ -368,7 +367,19 @@ async def confirmParticipation(session_token, tablenum: str, confirmation: bool,
             response = await conn.execute("""
             DELETE from queue 
             WHERE userId = $1 AND tableId = $2""", uuid, tablenum
-        )
+            )
+            response = await conn.execute("""
+            UPDATE queue q
+                SET readyToJoin = TRUE
+                WHERE q.timeOfJoin = (
+                    SELECT MIN(next.timeOfJoin)
+                    FROM queue next
+                    WHERE next.tableId = $1
+                        AND next.timeOfJoin > (
+                            SELECT MAX(prev.timeOfJoin)
+                            FROM queue prev
+                            WHERE prev.tableId = $1
+                        AND prev.readyToJoin = FALSE));""", tablenum)
 
 
 
@@ -399,52 +410,80 @@ async def setTableConfiguration(tablename, game, maxPlayers):
 async def endGame(result, tablenum: str):
     # ccleaning up game table from the previous game, setting correct balances according to win or lose
     async with conn_pool.acquire() as conn:
-        async with conn.transaction():
-            row = await conn.fetchrow("""
-                INSERT INTO gamesPlayed(game, tableId)
-                SELECT gameSelected, tableId
-                FROM tables
-                WHERE tableId = $1
-                RETURNING gameId, game;
-            """, table_id)
-            game_id = row["gameId"]
+        try:
+            async with conn.transaction():
+                row = await conn.fetchrow("""
+                    INSERT INTO gamesPlayed(game, tableId)
+                    SELECT gameSelected, tableId
+                    FROM tables
+                    WHERE tableId = $1
+                    RETURNING gameId, game;
+                """, table_id)
+                game_id = row["gameId"]
 
-            players = await conn.fetch("""
-                SELECT u.username, u.id, a.betAmount
-                FROM activePlayers a
-                JOIN users u ON u.id = a.userId
-                WHERE a.tableId = $1;
-            """, table_id)
+                players = await conn.fetch("""
+                    SELECT u.username, u.id, a.betAmount
+                    FROM activePlayers a
+                    JOIN users u ON u.id = a.userId
+                    WHERE a.tableId = $1;
+                """, table_id)
 
-            balance_updates = []
-            logs = []
+                balance_updates = []
+                logs = []
 
-            for p in players:
-                final_amount = result[p["username"]]
-                initial = p["betamount"]
-                change = final_amount - initial
+                for p in players:
+                    final_amount = result[p["username"]]
+                    initial = p["betamount"]
+                    change = final_amount - initial
 
-                balance_updates.append((change, p["id"]))
-                logs.append((game_id, p["id"], initial, final_amount))
+                    balance_updates.append((change, p["id"]))
+                    logs.append((game_id, p["id"], initial, final_amount))
 
-            await conn.executemany("""
-                UPDATE accounts
-                SET balance = balance + $1
-                WHERE user_id = $2;
-            """, balance_updates)
+                await conn.executemany("""
+                    UPDATE accounts
+                    SET balance = balance + $1
+                    WHERE user_id = $2;
+                """, balance_updates)
 
-            await conn.executemany("""
-                INSERT INTO gamePlayerLogs(gameId, userId, initialBet, finalAmount)
-                VALUES ($1, $2, $3, $4);
-            """, logs)
+                await conn.executemany("""
+                    INSERT INTO gamePlayerLogs(gameId, userId, initialBet, finalAmount)
+                    VALUES ($1, $2, $3, $4);
+                """, logs)
 
-            await conn.execute("""
-                DELETE FROM activePlayers WHERE tableId = $1;
-            """, table_id)
+                await conn.execute("""
+                    DELETE FROM activePlayers WHERE tableId = $1;
+                """, table_id)
+        except Exception as e:
+            raise dbError(e)
+    return {"status": "ok"}
 
 async def removeFromQueue(username: str, tablenum: str):
     async with conn_pool.acquire() as conn:
         row = conn.execute("""DELETE FROM queue q JOIN users u 
         ON q.userId = u.id WHERE u.username = $1 AND tableId = $2 ;""",
         username, tablenum)
+        if not row.endswith("1"):
+            raise dbError(f"COULD NOT DELETE {username} from table {tablenum}")
+        return {"status": "ok"}
 
+async def confirmPlayers(tablenum: str):
+    # function to pick numberOfPlayers from queue and prepare to push into game table
+    async with conn_pool.acquire() as conn:
+        status = conn.execute("""UPDATE queue q
+            SET readyToJoin = TRUE
+            WHERE number IN (
+                SELECT q2.number
+                FROM queue q2
+                JOIN tables t ON q2.tableId = t.tableId
+                WHERE q2.tableId = $1
+                ORDER BY q2.timeOfJoin ASC
+                LIMIT t.max_players
+        );""", tablenum, numberOfPlayers)
+
+
+async def flushTable(tableId):
+    async with conn_pool.acquire() as conn:
+        status = conn.excecute("DELETE FROM activePlayers WHERE tableId = $1", tableID)
+    if status.endswith("0"):
+        raise dbError(f"could not flush table {tableId}")
+    return {"status": "ok"}
