@@ -288,27 +288,7 @@ async def getPlayerHome(session_token):
         }
 
 
-async def getTableDetails(tablenum: str):
-# return  queue data, players currently playing, player bets, 
-    async with conn_pool.acquire() as conn:
-        queue = conn.fetch(
-            """SELECT u.username AS username FROM users u JOIN queue q 
-            ON q.userId = u.id WHERE tableId = $1 ORDER BY q.timeOfJoin ASC;""", tablenum
-        )
-        activePlayers = conn.fetch(
-            """
-            SELECT u.username AS username a.betAmount AS bet 
-            FROM users u JOIN activePlayers a ON a.user_id = u.id WHERE tableId = $1;
-            """, tablenum
-        )
-    
-    playersCleaned = _convertActivePlayers(activePlayers)
-    queueCleaned = _convertQueue(queue)
 
-    return {
-        "queue": queueCleaned,
-        "players": playersCleaned
-    }
 
 
 
@@ -393,7 +373,106 @@ async def getParticipation(session_token: str):
 
 
 
-async def 
+async def getTablesForManager():
+    async with conn_pool.acquire() as conn:
+        rows = conn.fetch("""
+        SELECT tableId, gameSelected, status FROM tables;""")
+    response = {}
+    for row in rows:
+        response[row["tableId"]] = {"game":row["gameSelected"],"status":row["status"]}
+    return response
+
+
+async def getTableDetails(tableID: str):
+# return  queue data, players currently playing, player bets, 
+    async with conn_pool.acquire() as conn:
+        queue = conn.fetch(
+            """SELECT u.username AS username FROM users u JOIN queue q 
+            ON q.userId = u.id WHERE tableId = $1 ORDER BY q.timeOfJoin ASC;""", tablenum
+        )
+        activePlayers = conn.fetch(
+            """
+            SELECT u.username AS username a.betAmount AS bet 
+            FROM users u JOIN activePlayers a ON a.user_id = u.id WHERE tableId = $1;
+            """, tableId
+        )
+    
+    playersCleaned = _convertActivePlayers(activePlayers)
+    queueCleaned = _convertQueue(queue)
+
+    return {
+        "queue": queueCleaned,
+        "players": playersCleaned
+    }
+
+
+async def confirmPlayers(tablenum: str):
+    # function to pick numberOfPlayers from queue and prepare to push into game table
+    async with conn_pool.acquire() as conn:
+        status = conn.execute("""UPDATE queue q
+            SET readyToJoin = TRUE
+            WHERE number IN (
+                SELECT q2.number
+                FROM queue q2
+                JOIN tables t ON q2.tableId = t.tableId
+                WHERE q2.tableId = $1
+                ORDER BY q2.timeOfJoin ASC
+                LIMIT t.max_players
+        );""", tablenum)
+
+
+async def getTableConfiguration(tableId: str):
+    async with conn_pool.acquire() as conn:
+        configuration = conn.fetchrow("""
+        SELECT gameSelected as game, max_players AS maxPlayers 
+        FROM tables WHERE tableId = $1""", tableId)
+    response = {
+        "game": configuration["game"],
+        "maxPlayers": configuration["maxPlayers"]
+    }
+    return response
+
+async def flushTable(tableId):
+    async with conn_pool.acquire() as conn:
+        status = conn.excecute("DELETE FROM activePlayers WHERE tableId = $1", tableID)
+    if status.endswith("0"):
+        raise dbError(f"could not flush table {tableId}")
+    return {"status": "ok"}
+
+
+async def removeFromQueue(username: str, tablenum: str):
+    async with conn_pool.acquire() as conn:
+        row = conn.execute("""DELETE FROM queue q JOIN users u 
+        ON q.userId = u.id WHERE u.username = $1 AND tableId = $2 ;""",
+        username, tablenum)
+        if not row.endswith("1"):
+            raise dbError(f"COULD NOT DELETE {username} from table {tablenum}")
+        return {"status": "ok"}
+
+async def removeFromGame(username: str, tablenum: str):
+    async with conn_pool.acquire() as conn:
+        try:
+            async with conn.transaction():
+                await conn.execute("""
+                    UPDATE accounts a
+                    SET balance = balance + ap.betAmount
+                    FROM activePlayers ap
+                    JOIN users u ON u.id = ap.userId
+                    WHERE a.user_id = ap.userId
+                    AND u.username = $1
+                    AND ap.tableId = $2;
+                """, username, tablenum)
+
+                await conn.execute("""
+                    DELETE FROM activePlayers ap
+                    USING users u
+                    WHERE ap.userId = u.id
+                    AND u.username = $1
+                    AND ap.tableId = $2;
+                """, username, tablenum)
+        except Exception as e:
+            raise dbError(f"couuld not remove {username} from {tablenum}")
+        return {"status": "ok"}
 
 #------------- functions serving manager POST endpoints -------------#
 
@@ -457,33 +536,6 @@ async def endGame(result, tablenum: str):
             raise dbError(e)
     return {"status": "ok"}
 
-async def removeFromQueue(username: str, tablenum: str):
-    async with conn_pool.acquire() as conn:
-        row = conn.execute("""DELETE FROM queue q JOIN users u 
-        ON q.userId = u.id WHERE u.username = $1 AND tableId = $2 ;""",
-        username, tablenum)
-        if not row.endswith("1"):
-            raise dbError(f"COULD NOT DELETE {username} from table {tablenum}")
-        return {"status": "ok"}
-
-async def confirmPlayers(tablenum: str):
-    # function to pick numberOfPlayers from queue and prepare to push into game table
-    async with conn_pool.acquire() as conn:
-        status = conn.execute("""UPDATE queue q
-            SET readyToJoin = TRUE
-            WHERE number IN (
-                SELECT q2.number
-                FROM queue q2
-                JOIN tables t ON q2.tableId = t.tableId
-                WHERE q2.tableId = $1
-                ORDER BY q2.timeOfJoin ASC
-                LIMIT t.max_players
-        );""", tablenum, numberOfPlayers)
 
 
-async def flushTable(tableId):
-    async with conn_pool.acquire() as conn:
-        status = conn.excecute("DELETE FROM activePlayers WHERE tableId = $1", tableID)
-    if status.endswith("0"):
-        raise dbError(f"could not flush table {tableId}")
-    return {"status": "ok"}
+

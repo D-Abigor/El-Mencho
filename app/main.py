@@ -64,7 +64,17 @@ def _redirect_login():
 
 #------------------------ middleware ----------------------------#
 protected = ["/home", "/pay", "/payees", "/play", "/transfer"]
-
+managerEndpoints = [
+  "/tables",
+  "/table/{tableId}",
+  "/table/{tableId}/pull",
+  "/table/{tableId}/configure",
+  "/table/{tableId}/flush",
+  "/table/{tableId}/config",
+  "/table/{tableId}/end",
+  "/queue/{tableId}/remove",
+  "/queue/{tableId}/queue"
+]
 
 
 @app.middleware("http")
@@ -110,8 +120,15 @@ def username_availability_exception_handler(request: Request, exc: Exception):
 @app.exception_handler(transactionError)
 def username_availability_exception_handler(request: Request, exc: Exception):
   return pages.TemplateResponse("error.html", {"request": request, "message":exc.message})
-#----------------------- GET endpoints --------------------#
+#----------------------- GET endpoints FOR USER--------------------#
 
+
+@app.get("/leaderBoard")
+async with getLeaderBoard(request: Request):
+  return pages.TemplateResponse("leaderboard.html", {"request": request, "leaderboard": leaderboard})
+
+
+  
 @app.get("/")
 async def landing(request: Request):
     return pages.TemplateResponse("landing.html", {"request": request})
@@ -248,14 +265,58 @@ async def transfer_post(details: transferDetail, request: Request):
 @app.post("/game") # post that decides how much to bet
 async def play_post(details: game, response: Response):
 
+#-----------------GET FOR MANAGERS -----------------#
 
+@app.get("/tables")
+async def getTablesForManager(request: Request):
+  tables = await db.getTableDetails()
+  response = pages.TemplateResponse("tables.html", {"request": request, "details":tables})
+  return response
+
+@app.get("/table/{tableId}")
+# table.html needs to poll table/{tableId} every x seconds to update quueue and player details excluding the manager input 
+async def getTableDetails(request: Request):
+  details = await db.getTableDetails(tableId = tableId)
+  response = pages.TemplateResponse("table.html", {"request": request, "details": details})
+  return response
+
+
+@app.get("/table/{tableId}/pull")
+async def pullPlayers(request: Request, pullDetails: playerPullDetails):
+  status = await db.confirmPlayers( tablenum=tableId)
+  
+
+
+@app.get("/table/{tableId}/configure")
+async def getTableConfiguration(request: Request):
+  details = await db.getTableConfiguration(tableId = tableID)
+  response = pages.TemplateResponse("tableConfiguration.html", {"request": request, "details": details})
+  return response
+
+@app.get("/table/{tableId}/flush")
+async def flushTable(request: Request, tablenum: Tablenum):
+  tableId = tablenum.tableId
+  status  = db.flushTable(tableId = tableID)
+  return JSONResponse(status)
+
+# remove player from game table
+@app.get("/table/{tableId}/remove")
+async def removeFromQueue(request: Request, removePlayer: str = None):
+  status = await db.removeFromGame(username = removePlayer, tablenum = tableId)
+  return JSONResponse(status)
+
+# remove player from queue
+@app.get("/table{tableId}/queue")
+async def removeFromQueue(request: Request, removePlayer: str = None):
+  status = await db.removeFromQueue(username = removePlayer, tablenum = tableId)
+  return JSONResponse(status)
 
 
 
 #----------------POST FOR MANAGERS -----------------#
 
 
-@app.post("/table/config")
+@app.post("/table/{tableId}/config")
 async def configureTable(request: Request, configuration: tableConfig):
   tablename = configuration.tablename
   game = configuration.game
@@ -264,33 +325,11 @@ async def configureTable(request: Request, configuration: tableConfig):
   return JSONResponse(status)
 
 
-@app.post("/table/end")
+@app.post("/table/{tableId}/end")
 async def configureTable(request: Request, result: gameResults):
   tablenum = result.tablenum
   result = result.results
   status = await db.endGame(tablenum = tablenum, result = result )
-  return JSONResponse(status)
-
-@app.post("/table/pull")
-async def pullPlayers(request: Request, pullDetails: playerPullDetails):
-  tableId = pullDetails.tableId
-  status = await db.confirmPlayers( tablenum=tableId)
-
-@app.post("/table/start")
-
-
-@app.post("/table/flush")
-async def flushTable(request: Request, tablenum: Tablenum):
-  tableId = tablenum.tableId
-  status  = db.flushTable(tableId = tableID)
-  return JSONResponse(status)
-
-
-@app.post("/queue/remove")
-async def removeFromQueue(request: Request, removePlayer: removeFromQueueDetails):
-  username = removePlayer.username
-  tableId = removePlayer.tableId
-  status = await db.removeFromQueue(username = username, tablenum = tableId)
   return JSONResponse(status)
 
 
