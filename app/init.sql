@@ -30,7 +30,7 @@ CREATE TABLE transactions(
 );
 
 CREATE TABLE tables(                                        -- FIX: added semicolons throughout
-    tableId INT PRIMARY KEY,
+    tableId TEXT PRIMARY KEY,
     gameSelected TEXT CHECK (gameSelected IN ('Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s')),
     status TEXT CHECK (status IN ('idle', 'ready','running', 'ended')),
     max_players INT
@@ -54,7 +54,7 @@ INSERT INTO users(username,password_hash,isleader,affiliation,access) VALUES
 
 CREATE TABLE activeplayers(
     userid uuid PRIMARY KEY,
-    tableid INT NOT NULL,
+    tableid TEXT NOT NULL,
     betamount INT NOT NULL,
     timeofjoin TIMESTAMP DEFAULT now(),
     CONSTRAINT activeplayers_tableid_fkey FOREIGN KEY (tableid) REFERENCES tables(tableid),
@@ -63,7 +63,7 @@ CREATE TABLE activeplayers(
 
 CREATE TABLE queue(
     number SERIAL PRIMARY KEY,
-    tableid INT NOT NULL,
+    tableid TEXT NOT NULL,
     userid uuid NOT NULL,
     timeofjoin TIMESTAMP DEFAULT now(),
     readytojoin BOOL NOT NULL DEFAULT FALSE,
@@ -74,7 +74,7 @@ CREATE TABLE queue(
 CREATE TABLE gamesplayed(
     gameid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     game TEXT NOT NULL,
-    tableid INT NOT NULL,
+    tableid TEXT NOT NULL,
     timeoffinish TIMESTAMP DEFAULT now(),
     CONSTRAINT gamesplayed_tableid_fkey FOREIGN KEY (tableid) REFERENCES tables(tableid)  -- FIX: syntax
 );

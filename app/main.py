@@ -180,6 +180,7 @@ async def logout(request: Request):
 async def play(request: Request):
     session_token = request.state.session_token
     games_and_queue = await db.getUserQueue(session_token=session_token)
+    print(games_and_queue)
     return pages.TemplateResponse(
         "play.html",
         {
@@ -244,7 +245,7 @@ async def confirmParticipation(request: Request, participation: participationCon
 @app.post("/play")
 async def addtoQueue(request: Request, tablenum: enterQueue):
     session_token = request.state.session_token
-    await db.insertIntoQueue(session_token, tablenum)
+    await db.insertIntoQueue(session_token, tablenum.tablenum)
 
 
 #--------------------- GET endpoints — Manager -----------------#

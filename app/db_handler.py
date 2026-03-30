@@ -367,11 +367,14 @@ async def getLeaderBoard():
 async def insertIntoQueue(session_token: str, tablenum: str):
     userId = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
-        await conn.execute(
-            """INSERT INTO queue (tableId, userId)
-               VALUES ($1, $2);""",
+        status = await conn.fetchrow("""SELECT FROM queue WHERE userid = $1 AND tableid = $2""", userId, tablenum)
+        if status:
+            return {"status": "already in queue"}
+        else:
+            await conn.execute("""INSERT INTO queue (tableId, userId) VALUES ($1, $2);""",
             tablenum, userId
         )
+        return {"status": "ok"}
 
 
 async def confirmParticipation(session_token: str, tablenum: str, confirmation: bool, betAmount: str):
