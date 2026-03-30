@@ -83,26 +83,25 @@ async def validate_request(request: Request, call_next):
 
     if path in protected:
         status = await db.validate(session_token=session_token, role="player")
-        if status:
-            request.state.session_token = session_token
-            response = await call_next(request)
-            return response
-        else:
-            raise InvalidSession("Invalid or expired session")
+        if not status:
+            return pages.TemplateResponse(
+                "error.html",
+                {"request": request, "message": "Invalid or expired session"},
+                status_code=401
+            )
 
     elif path.startswith("/table/"):
         status = await db.validate(session_token=session_token, role="manager")
-        if status:
-            request.state.session_token = session_token
-            response = await call_next(request)
-            return response
-        else:
-            raise InvalidSession("Invalid or expired session")
+        if not status:
+            return pages.TemplateResponse(
+                "error.html",
+                {"request": request, "message": "Invalid or expired session"},
+                status_code=401
+            )
 
-    else:
-        response = await call_next(request)
-        return response
-
+    request.state.session_token = session_token
+    response = await call_next(request)
+    return response
 
 #---------------------- Exception Handlers -----------------------#
 
