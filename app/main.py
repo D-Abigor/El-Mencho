@@ -120,7 +120,7 @@ def username_availability_exception_handler(request: Request, exc: Exception):
 @app.exception_handler(transactionError)
 def username_availability_exception_handler(request: Request, exc: Exception):
   return pages.TemplateResponse("error.html", {"request": request, "message":exc.message})
-#----------------------- GET endpoints FOR USER--------------------#
+#----------------------- GET endpoints FOR player--------------------#
 
 
 @app.get("/leaderBoard")
@@ -182,7 +182,7 @@ async def logout(request: Request):
 
 
 
-@app.get("/play")
+@app.get("/queue")
 async def play(request: Request):
   session_token = request.state.session_token
   games_and_queue = await db.getUserQueue(session_token = session_token)
@@ -196,19 +196,6 @@ async def play(request: Request):
   )
   return response
 
-@app.get("/table")
-async def getTables(request: Request, tablenum: str = 1):
-  game  = await db.getManagerHome(tablenum)
-  response = pages.TemplateResponse(
-    "table.html",
-    {
-      "request": request,
-      "queue": game["queue"],
-      "players": game["players"]
-    }
-  )
-  
-
 
 @app.get("/queue")
 async def getqueue(request: Request):
@@ -221,8 +208,10 @@ async def checkParticipation(request: Request):
   session_token = request.state.session_token
   queueStatus = await db.getParticipation(session_token)
 
-#------------------------ POST endpoints ----------------------#
+@app.get("/game")
 
+#------------------------ POST endpoints for players----------------------#
+#rewrite
 @app.post("/gameConfirm")
 async def confirmParticipation(request: Request, participation: participationConfirm):
   session_token = request.state.session_token
@@ -273,8 +262,8 @@ async def getTablesForManager(request: Request):
   response = pages.TemplateResponse("tables.html", {"request": request, "details":tables})
   return response
 
-@app.get("/table/{tableId}")
 # table.html needs to poll table/{tableId} every x seconds to update quueue and player details excluding the manager input 
+@app.get("/table/{tableId}")
 async def getTableDetails(request: Request):
   details = await db.getTableDetails(tableId = tableId)
   response = pages.TemplateResponse("table.html", {"request": request, "details": details})
