@@ -103,9 +103,9 @@ def _transactionstoDescriptive(transactionlogs: list[asyncpg.Record], uuid: _uui
         destinationusername = entry["destinationusername"]
         sourceusername = entry["sourceusername"]
         if source == uuid:
-            line = f"you sent {destinationusername} {changeusername}"
+            line = f"you sent {destinationusername} {change}"
         elif destination == uuid:
-            line = f"{sourceusername} sent you {changeusername}"
+            line = f"{sourceusername} sent you {change}"
         cleanedLogs.append(line)
     return cleanedLogs
 
