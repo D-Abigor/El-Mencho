@@ -234,6 +234,7 @@ async def transfer_post(details: transferDetail, request: Request):
 @app.post("/gameConfirm")
 async def confirmParticipation(request: Request, participation: participationConfirm):
     session_token = request.state.session_token
+    print("entered gamecconfirm post")
     await db.confirmParticipation(
         session_token=session_token,
         tablenum=participation.tablenum,

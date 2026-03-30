@@ -378,7 +378,10 @@ async def insertIntoQueue(session_token: str, tablenum: str):
     print("insert into queue function trigged")
     userId = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
-        status = await conn.fetchrow("""SELECT tableid FROM queue WHERE userid = $1 AND tableid = $2;""", userId, tablenum)
+        status = await conn.fetchrow("""SELECT tableid FROM queue WHERE userid = $1 AND tableid = $2
+                                        UNION
+                                        SELECT tableid FROM activePlayers WHERE userid = $1 AND tableid = $2;""", 
+                                        userId, tablenum)
         print("row from checking if user in queue with arguments ", userId, tablenum)
         if status:
             print("detected as already in queue")
@@ -394,18 +397,16 @@ async def insertIntoQueue(session_token: str, tablenum: str):
 async def confirmParticipation(session_token: str, tablenum: str, confirmation: bool, betAmount: str):
     # get user confirmation before moving player into game table; dropped from queue otherwise
     uuid = await _uuidFromSession(session_token)
-
-    try:
-        betAmount = int(betAmount)
-    except (TypeError, ValueError):
-        raise transactionError("Bet amount must be a whole number")
-    if betAmount <= 0:
-        raise transactionError("Bet amount must be greater than zero")
-
     async with conn_pool.acquire() as conn:
         if confirmation:
+            try:
+                betAmount = int(betAmount)
+            except (TypeError, ValueError):
+                raise transactionError("Bet amount must be a whole number")
+            if betAmount <= 0:
+                raise transactionError("Bet amount must be greater than zero")
+            
             async with conn.transaction():
-                # check balance before deducting
                 balance_row = await conn.fetchrow(
                     "SELECT balance FROM accounts WHERE user_id = $1 FOR UPDATE;", uuid
                 )
@@ -413,14 +414,10 @@ async def confirmParticipation(session_token: str, tablenum: str, confirmation: 
                     raise dbError("Account not found")
                 if balance_row["balance"] < betAmount:
                     raise transactionError("Insufficient balance to place bet")
-
-                # deduct bet from balance
                 await conn.execute(
                     "UPDATE accounts SET balance = balance - $1 WHERE user_id = $2;",
                     betAmount, uuid
                 )
-
-                # move into active players
                 response = await conn.execute(
                     """INSERT INTO activePlayers (userId, tableId, betAmount)
                        VALUES ($1, $2, $3);""",
@@ -428,20 +425,17 @@ async def confirmParticipation(session_token: str, tablenum: str, confirmation: 
                 )
                 if not response.endswith("1"):
                     raise dbError(f"Could not confirm participation for table {tablenum}")
-
-                # remove from queue
                 await conn.execute(
                     "DELETE FROM queue WHERE userId = $1 AND tableId = $2;",
                     uuid, tablenum
                 )
         else:
+            print("player declined, removing from queue")
             async with conn.transaction():
-                # remove from queue
                 await conn.execute(
                     "DELETE FROM queue WHERE userId = $1 AND tableId = $2;",
                     uuid, tablenum
                 )
-                # promote next person in queue
                 await conn.execute(
                     """UPDATE queue q
                        SET readyToJoin = TRUE
@@ -453,7 +447,6 @@ async def confirmParticipation(session_token: str, tablenum: str, confirmation: 
                        );""",
                     tablenum
                 )
-
 
 async def getParticipation(session_token: str):
     uuid = await _uuidFromSession(session_token)
