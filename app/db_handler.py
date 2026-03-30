@@ -125,7 +125,6 @@ def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
 
 
 def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
-    tableAndGame = await getTableGames()
     queues = {}
     for queue in activeQueue:
         queues[queue["tableid"]] = {"game": queue["game"], "position": queue["position"], "length": queue["length"]}
@@ -329,11 +328,6 @@ async def getPlayerHome(session_token: str):
         "gamelogs": _gameLogstoDescriptive(gameLogs)
     }
 
-async def getTableGames():
-    async with conn.pool.acquire() as conn:
-        tablesAndGames = conn.fetch("SELECT tableid, gameselected AS game FROM tables;")
-    return {tableAndGame["tableid"] : tableAndGame["game"] for tableAndGame in tablesAndGame}
-
 async def getUserQueue(session_token: str):
     uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
@@ -356,6 +350,7 @@ async def getUserQueue(session_token: str):
             WHERE userId = $1
             ) uq ON uq.tableId = t.tableId;""",uuid
         )
+        [print(dict(row)) for row in activeQueues]
     return _cleanUserQueue(activeQueues)
 
 
