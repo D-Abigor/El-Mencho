@@ -125,13 +125,10 @@ def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
 
 
 def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
+    tableAndGame = await getTableGames()
     queues = {}
     for queue in activeQueue:
         queues[queue["tableid"]] = {"game": queue["game"], "position": queue["position"], "length": queue["length"]}
-    for game in ['Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s']:
-        if game not in queues:
-            queues[game] = -1
-    return queues
 
 
 #------------------------ Route helper functions ------------------------#
@@ -332,22 +329,32 @@ async def getPlayerHome(session_token: str):
         "gamelogs": _gameLogstoDescriptive(gameLogs)
     }
 
+async def getTableGames():
+    async with conn.pool.acquire() as conn:
+        tablesAndGames = conn.fetch("SELECT tableid, gameselected AS game FROM tables;")
+    return {tableAndGame["tableid"] : tableAndGame["game"] for tableAndGame in tablesAndGame}
 
 async def getUserQueue(session_token: str):
     uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         activeQueues = await conn.fetch(
             """SELECT 
+                t.tableId AS tableid,
                 t.gameSelected AS game,
-                ROW_NUMBER() OVER (
-                    PARTITION BY q.tableId ORDER BY q.timeOfJoin ASC
-                ) AS position,
-                    q.readyToJoin AS readytojoin,
-                    t.tableId AS tableid,
-                    COUNT(*) OVER (PARTITION BY q.tableId) AS length
-            FROM queue q
-            JOIN tables t ON q.tableId = t.tableId
-            WHERE q.userId = $1;""",uuid
+                COALESCE(sq.length, 0) AS length,
+                COALESCE(uq.position, -1) AS position
+            FROM tables t
+            LEFT JOIN (
+                SELECT tableId, COUNT(*) AS length
+                FROM queue
+                GROUP BY tableId
+            ) sq ON sq.tableId = t.tableId
+            LEFT JOIN (
+                SELECT tableId,
+           ROW_NUMBER() OVER (PARTITION BY tableId ORDER BY timeOfJoin ASC) AS position
+            FROM queue
+            WHERE userId = $1
+            ) uq ON uq.tableId = t.tableId;""",uuid
         )
     return _cleanUserQueue(activeQueues)
 
