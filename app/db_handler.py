@@ -601,11 +601,11 @@ async def removeFromGame(username: str, tablenum: str):
 async def getTableDetails(tableId: str):
 # return  queue data, players currently playing, player bets, 
     async with conn_pool.acquire() as conn:
-        queue = conn.fetch(
+        queue = await conn.fetch(
             """SELECT u.username AS username FROM users u JOIN queue q 
             ON q.userId = u.id WHERE tableId = $1 ORDER BY q.timeOfJoin ASC;""", tableId
         )
-        activePlayers = conn.fetch(
+        activePlayers = await conn.fetch(
             """
             SELECT u.username AS username a.betAmount AS bet 
             FROM users u JOIN activePlayers a ON a.user_id = u.id WHERE tableId = $1;
