@@ -668,10 +668,12 @@ async def startGame(tablenum: str):
 
 
 async def endGame(result: dict, tablenum: str):
+    print("entered endGame function")
     # settle game — update balances, write logs, clear active players
     async with conn_pool.acquire() as conn:
         try:
             async with conn.transaction():
+
                 row = await conn.fetchrow(
                     """INSERT INTO gamesPlayed (game, tableId)
                        SELECT gameSelected, tableId
@@ -681,6 +683,7 @@ async def endGame(result: dict, tablenum: str):
                     tablenum
                 )
                 game_id = row["gameid"]
+                print("gameid :", game_id)
 
                 players = await conn.fetch(
                     """SELECT u.username, u.id, ap.betAmount
@@ -689,6 +692,7 @@ async def endGame(result: dict, tablenum: str):
                        WHERE ap.tableId = $1;""",
                     tablenum
                 )
+                print("players:" players)
 
                 balance_updates = []
                 logs = []
