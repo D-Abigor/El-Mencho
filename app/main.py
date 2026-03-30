@@ -202,9 +202,11 @@ async def checkParticipation(request: Request):
 
 @app.post("/login")
 async def login_post(creds: login, request: Request):
+    print("receieved post at /login")
     session_token = await db.getSessionToken(
         username=creds.username, password=creds.password
     )
+    print("session_token from login", session_token)
     redirect = RedirectResponse(url="/home", status_code=303)
     redirect.set_cookie(
         key="session_token",
