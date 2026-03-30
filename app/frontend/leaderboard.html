@@ -16,7 +16,7 @@
     border-collapse: collapse;
     width: 600px;
     background: #1c1c1c;
-    box-shadow: 0 0 20px #ffd700; /* gold glow */
+    box-shadow: 0 0 20px #ffd700;
     border-radius: 10px;
     overflow: hidden;
   }
@@ -26,7 +26,7 @@
   }
   th {
     background: #222;
-    color: #ffd700; /* gold headers */
+    color: #ffd700;
     font-size: 1.1em;
   }
   tr:nth-child(even) {
@@ -38,43 +38,37 @@
   }
   .rank {
     font-weight: bold;
-    color: #00a86b; /* emerald green */
+    color: #00a86b;
   }
   .credits {
-    color: #ffd700; /* gold */
+    color: #ffd700;
     font-weight: bold;
   }
   h1 {
     text-align: center;
     color: #ffd700;
     margin-bottom: 20px;
-    text-shadow: 0 0 5px #00a86b; /* subtle emerald glow */
+    text-shadow: 0 0 5px #00a86b;
   }
 </style>
 </head>
 <body>
-  <div>
-    <h1>Casino Leaderboard</h1>
-    <table>
-      <tr>
-        <th>Rank</th>
-        <th>Team</th>
-        <th>Credits</th>
-      </tr>
-      {% for entry in leaderboard %}
-        <tr>
-        <td class="rank">{{ loop.index }}</td>  {# 1-based rank #}
-        <td>{{ entry.teamname }}</td>
-        <td class="credits">{{ "{:,}".format(entry.totalCredits) }}</td>
-        </tr>
-        {% endfor %}
-      <tr>
-        <td class="rank">{{ i }}</td>
-        <td>{{ entry.teamname }}</td>
-        <td class="credits">{{ "{:,}".format(entry.totalCredits) }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
+<div>
+  <h1>Casino Leaderboard</h1>
+  <table>
+    <tr>
+      <th>Rank</th>
+      <th>Team</th>
+      <th>Credits</th>
+    </tr>
+    {% for entry in leaderboard %}
+    <tr>
+      <td class="rank">{{ loop.index }}</td>
+      <td>{{ entry.teamname }}</td>
+      <td class="credits">{{ "{:,}".format(entry.totalCredits) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
 </body>
 </html>
