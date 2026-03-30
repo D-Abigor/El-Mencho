@@ -1,7 +1,6 @@
 import asyncpg
 import asyncio
 import os
-import uuid
 from dotenv import load_dotenv
 from passlib.hash import bcrypt
 from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability, authenticationFailure, transactionError
@@ -13,7 +12,7 @@ tokenCleanFrequency = 180       # seconds between expired session sweeps
 bcryptCost = 12                 # bcrypt work factor
 
 
-# --------------------------- Init ------------------#
+#--------------------------- Init ------------------#
 
 async def session_cleaner():
     while True:
@@ -27,93 +26,93 @@ async def init_conn_pool_and_cleaner():
     asyncio.create_task(session_cleaner())
 
 
-# ----------------- Internal Helper ----------------------#
+#----------------- Internal Helpers ----------------------#
 
-async def _getuuid(username: str) -> uuid.UUID:
+async def _uuidFromSession(session_token: str) -> str:
+    async with conn_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """SELECT user_id FROM sessions
+               WHERE session_token = $1 AND expires_at > NOW();""",
+            session_token,
+        )
+        if not row:
+            raise InvalidSession("Session invalid or expired")
+        return row["user_id"]
+
+
+async def _getuuid(username: str) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT id FROM users WHERE username = $1;", username
         )
         if not row:
             raise dbError("Internal db error - could not get corresponding uuid for your username")
-        return row["id"]   # native uuid.UUID — asyncpg needs this
+        return str(row["id"])
 
 
-async def _uuidFromSession(session_token: str) -> uuid.UUID:
+async def _getUsernameFromUuid(uuid: str) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
-            """SELECT user_id FROM sessions
-               WHERE session_token = $1 AND expires_at > NOW();""",
-            uuid.UUID(session_token),
-        )
-        if not row:
-            raise InvalidSession("Session is invalid or has expired.")
-        return row["user_id"]   # native uuid.UUID — asyncpg needs this
-
-
-async def _getUsernameFromUuid(uuid_val: uuid.UUID) -> str:
-    async with conn_pool.acquire() as conn:
-        row = await conn.fetchrow(
-            "SELECT username FROM users WHERE id = $1;", uuid_val
+            "SELECT username FROM users WHERE id = $1;", uuid
         )
         if not row:
             raise dbError("Internal db error - could not get corresponding username from uuid")
         return row["username"]
 
-async def _getTeamnameFromUuid(uuid_val: uuid.UUID) -> str:
+
+async def _getTeamnameFromUuid(uuid: str) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT affiliation FROM users WHERE id = $1;", uuid_val
+            "SELECT affiliation FROM users WHERE id = $1;", uuid
         )
         if not row:
             raise dbError("Internal db error - could not get corresponding teamname from uuid")
         return row["affiliation"]
 
-def _gameLogstoDescriptive(gamelogs: list) -> list:
+
+def _gameLogstoDescriptive(gamelogs: list[asyncpg.Record]):
     cleanedLogs = []
-    for entries in gamelogs:
-        game = entries["game"]
-        time = entries["timeoffinish"]
-        credit_change = entries["finalamount"] - entries["initialbet"]
-        if credit_change >= 0:
-            line = f"You played {game} at {time} and won {abs(credit_change)} credits"
+    for entry in gamelogs:
+        game = entry["game"]
+        time = entry["timeOfFinish"]
+        creditChange = entry["finalAmount"] - entry["initialBet"]
+        if creditChange >= 0:
+            line = f"you played {game} at {time} and won {abs(creditChange)}"
         else:
-            line = f"You played {game} at {time} and lost {abs(credit_change)} credits"
+            line = f"you played {game} at {time} and lost {abs(creditChange)}"
         cleanedLogs.append(line)
     return cleanedLogs
 
-def _transactionstoDescriptive(transactionlogs: list, user_uuid: uuid.UUID) -> list:
-    # Normalise to string once so every comparison is str-vs-str
-    user_uuid_str = str(user_uuid)
+
+def _transactionstoDescriptive(transactionlogs: list[asyncpg.Record], uuid: str):
     cleanedLogs = []
-    for entries in transactionlogs:
-        change = entries["change"]
-        source = str(entries["source"])
-        destination = str(entries["destination"])
-        if source == user_uuid_str:
-            line = f"You sent {change} credits"
-        elif destination == user_uuid_str:
-            line = f"You received {change} credits"
-        else:
-            line = f"Transaction of {change} credits"
+    for entry in transactionlogs:
+        change = entry["change"]
+        source = entry["source"]
+        destination = entry["destination"]
+        if str(source) == str(uuid):
+            line = f"you sent {destination} {change}"
+        elif str(destination) == str(uuid):
+            line = f"{source} sent you {change}"
         cleanedLogs.append(line)
     return cleanedLogs
 
-def _convertQueue(queue: list) -> dict:
-    queuecleaned = {}
-    index = 1
-    for players in queue:
-        queuecleaned[index] = players["username"]
-        index += 1
-    return queuecleaned
 
-def _convertActivePlayers(activePlayers: list) -> dict:
+def _convertQueue(queue: list[asyncpg.Record]):
+    queueCleaned = {}
+    for index, player in enumerate(queue, start=1):
+        queueCleaned[index] = player["username"]
+    return queueCleaned
+
+
+def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
     players = {}
     for player in activePlayers:
         players[player["username"]] = player["bet"]
     return players
 
-def _cleanUserQueue(activeQueue: list) -> dict:
+
+def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
     queues = {}
     for queue in activeQueue:
         queues[queue["game"]] = queue["position"]
@@ -123,40 +122,39 @@ def _cleanUserQueue(activeQueue: list) -> dict:
     return queues
 
 
-# ------------------------ route helper functions ------------------------#
+#------------------------ Route helper functions ------------------------#
 
 async def validate(session_token: str, role: str) -> bool:
-    if not session_token:
-        return False
-    try:
-        token_uuid = uuid.UUID(session_token)
-    except ValueError:
-        return False
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             """SELECT u.access
                FROM sessions s
                JOIN users u ON s.user_id = u.id
                WHERE s.session_token = $1 AND s.expires_at > NOW();""",
-            token_uuid,
+            session_token,
         )
     return bool(row and row["access"] == role)
 
 
-async def getPayees(session_token: str) -> list:
-    source_uuid = await _uuidFromSession(session_token)
-    teamname = await _getTeamnameFromUuid(source_uuid)
+async def getPayees(session_token: str):
+    # single query — resolves uuid, teamname and payee list in one shot
     async with conn_pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT username FROM users WHERE id != $1 AND affiliation = $2 ORDER BY username;",
-            source_uuid, teamname
+            """SELECT u2.username
+               FROM sessions s
+               JOIN users u1 ON s.user_id = u1.id
+               JOIN users u2 ON u2.affiliation = u1.affiliation AND u2.id != u1.id
+               WHERE s.session_token = $1 AND s.expires_at > NOW()
+               ORDER BY u2.username;""",
+            session_token
         )
-    # Empty list is valid (solo team or no teammates) — don't raise
+    if not rows:
+        raise dbError("Internal db error - could not get list of payees")
     return [r["username"] for r in rows]
 
 
-async def getSessionToken(username: str, password: str) -> uuid.UUID:
-    # Input length guard — bcrypt silently truncates at 72 bytes
+async def getSessionToken(username: str, password: str):
+    # input length guard — bcrypt silently truncates at 72 bytes
     if len(password.encode()) > 72:
         raise authenticationFailure("Password too long")
 
@@ -187,17 +185,18 @@ async def getSessionToken(username: str, password: str) -> uuid.UUID:
             else:
                 raise authenticationFailure("Invalid credentials")
         else:
-            raise authenticationFailure("Invalid credentials")   # Don't leak user existence
+            raise dbError("Internal db error - user does not exist")
 
 
-async def deleteSessionToken(session_token: str) -> None:
+async def deleteSessionToken(session_token: str):
     async with conn_pool.acquire() as conn:
         await conn.execute(
-            "DELETE FROM sessions WHERE session_token = $1;", uuid.UUID(session_token)
+            "DELETE FROM sessions WHERE session_token = $1;", session_token
         )
 
 
-async def transfer(session_id: str, destination_username: str, amount) -> bool:
+async def transfer(session_id: str, destination_username: str, amount):
+    # validate transfer amount
     try:
         amount = int(amount)
     except (TypeError, ValueError):
@@ -208,14 +207,14 @@ async def transfer(session_id: str, destination_username: str, amount) -> bool:
     source_uuid = await _uuidFromSession(session_id)
     dest_uuid = await _getuuid(destination_username)
 
-    if source_uuid == dest_uuid:
+    if str(source_uuid) == str(dest_uuid):
         raise transactionError("Cannot transfer to yourself")
 
     async with conn_pool.acquire() as conn:
         try:
             async with conn.transaction():
-                # Lock both rows in a deterministic order to prevent deadlocks
-                ids = sorted([source_uuid, dest_uuid], key=lambda x: str(x))
+                # Lock both rows in consistent UUID order to prevent deadlock
+                ids = sorted([str(source_uuid), str(dest_uuid)])
                 await conn.fetchrow(
                     "SELECT balance FROM accounts WHERE user_id = $1 FOR UPDATE;",
                     ids[0],
@@ -253,331 +252,393 @@ async def transfer(session_id: str, destination_username: str, amount) -> bool:
                     amount, dest_uuid,
                 )
                 return True
-        except transactionError:
+        except (transactionError):
             raise
         except Exception as e:
             raise transactionError(f"Transaction failed: {str(e)}")
 
 
-async def getPlayerHome(session_token: str) -> dict:
-    userid = await _uuidFromSession(session_token)
+async def getPlayerHome(session_token: str):
+    # single query — resolves user details, team credits, game logs and transactions together
     async with conn_pool.acquire() as conn:
-        userDetails = await conn.fetchrow(
-            """SELECT u.affiliation AS teamname, a.balance AS usercredits
-            FROM users u JOIN accounts a ON u.id = a.user_id
-            WHERE u.id = $1;""", userid
+        uuid = await _uuidFromSession(session_token)
+
+        userAndTeam = await conn.fetchrow(
+            """SELECT
+                u.affiliation AS teamname,
+                a.balance AS userCredits,
+                SUM(a2.balance) OVER (PARTITION BY u.affiliation) AS teamCredits
+               FROM users u
+               JOIN accounts a ON u.id = a.user_id
+               JOIN users u2 ON u2.affiliation = u.affiliation
+               JOIN accounts a2 ON u2.id = a2.user_id
+               WHERE u.id = $1
+               LIMIT 1;""",
+            uuid
         )
-        if not userDetails:
-            raise dbError("Could not load account details")
-        generalDetails = await conn.fetchrow(
-            """SELECT SUM(a.balance) AS teamcredits
-            FROM users u JOIN accounts a ON u.id = a.user_id
-            WHERE u.affiliation = $1;""", userDetails["teamname"]
-        )
+
         gameLogs = await conn.fetch(
             """SELECT
-            b.game AS game, b.timeoffinish AS timeoffinish,
-            a.initialbet AS initialbet, a.finalamount AS finalamount
-            FROM gameplayerlogs a JOIN gamesplayed b ON a.gameid = b.gameid
-            WHERE a.userid = $1
-            ORDER BY b.timeoffinish DESC;""", userid
+                gp.game AS game,
+                gp.timeOfFinish AS timeOfFinish,
+                gpl.initialBet AS initialBet,
+                gpl.finalAmount AS finalAmount
+               FROM gamePlayerLogs gpl
+               JOIN gamesPlayed gp ON gpl.gameId = gp.gameId
+               WHERE gpl.userId = $1
+               ORDER BY gp.timeOfFinish DESC;""",
+            uuid
         )
+
         transactions = await conn.fetch(
-            """SELECT t.change AS change, t.source AS source, t.destination AS destination
-            FROM transactions t WHERE t.source = $1 OR t.destination = $1;""",
-            userid
+            """SELECT change, source, destination
+               FROM transactions
+               WHERE source = $1 OR destination = $1
+               ORDER BY processed_at DESC;""",
+            uuid
         )
-    # Pass native UUID so _transactionstoDescriptive can str() it correctly
-    convertedTransactions = _transactionstoDescriptive(transactions, userid)
-    convertedLogs = _gameLogstoDescriptive(gameLogs)
+
     return {
-        "teamname": userDetails["teamname"],
-        "usercredits": userDetails["usercredits"],
-        "teamcredits": generalDetails["teamcredits"],
-        "transactions": convertedTransactions,
-        "gamelogs": convertedLogs
+        "teamname": userAndTeam["teamname"],
+        "usercredits": userAndTeam["userCredits"],
+        "teamcredits": userAndTeam["teamCredits"],
+        "transactions": _transactionstoDescriptive(transactions, uuid),
+        "gamelogs": _gameLogstoDescriptive(gameLogs)
     }
 
 
-async def getTableDetails(tablenum: str) -> dict:
-    async with conn_pool.acquire() as conn:
-        # All column names are lowercase — match the actual schema
-        queue = await conn.fetch(
-            """SELECT u.username AS username
-               FROM users u
-               JOIN queue q ON q.userid = u.id
-               WHERE q.tableid = $1
-               ORDER BY q.timeofjoin ASC;""",
-            int(tablenum)
-        )
-        activePlayers = await conn.fetch(
-            """SELECT u.username AS username, a.betamount AS bet
-               FROM users u
-               JOIN activeplayers a ON a.userid = u.id
-               WHERE a.tableid = $1;""",
-            int(tablenum)
-        )
-
-    playersCleaned = _convertActivePlayers(activePlayers)
-    queueCleaned = _convertQueue(queue)
-
-    return {
-        "queue": queueCleaned,
-        "players": playersCleaned
-    }
-
-
-async def getActivePlayers(tablenum: str) -> dict:
-    """Return {uuid_str: username} for active players at a table — used by end-game UI."""
-    async with conn_pool.acquire() as conn:
-        rows = await conn.fetch(
-            """SELECT u.id AS userid, u.username AS username
-               FROM users u
-               JOIN activeplayers a ON a.userid = u.id
-               WHERE a.tableid = $1;""",
-            int(tablenum)
-        )
-    return {str(r["userid"]): r["username"] for r in rows}
-
-
-async def getManagerHome(tablenum: str) -> dict:
-    return await getTableDetails(tablenum)
-
-
-async def getUserQueue(session_token: str) -> dict:
-    user_uuid = await _uuidFromSession(session_token)
+async def getUserQueue(session_token: str):
+    uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         activeQueues = await conn.fetch(
-            """
-            SELECT gameselected AS game, position
-            FROM (
-                SELECT
-                    q.userid,
-                    t.gameselected,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY q.tableid
-                        ORDER BY q.timeofjoin ASC
-                    ) AS position
-                FROM queue q
-                JOIN tables t ON q.tableid = t.tableid
-            ) sub
-            WHERE userid = $1;
-            """, user_uuid
+            """SELECT t.gameSelected AS game,
+                      ROW_NUMBER() OVER (
+                          PARTITION BY q.tableId ORDER BY q.timeOfJoin ASC
+                      ) AS position,
+                      q.readyToJoin AS readyToJoin
+               FROM queue q
+               JOIN tables t ON q.tableId = t.tableId
+               WHERE q.userId = $1;""",
+            uuid
         )
-    cleanedUserQueue = _cleanUserQueue(activeQueues)
-    return cleanedUserQueue
+    return _cleanUserQueue(activeQueues)
 
 
-async def removeFromQueue(username: str, game: str) -> None:
-    user_uuid = await _getuuid(username)
+async def getLeaderBoard():
     async with conn_pool.acquire() as conn:
-        await conn.execute(
-            """DELETE FROM queue
-               WHERE userid = $1
-               AND tableid IN (
-                   SELECT tableid FROM tables WHERE gameselected = $2
-               );""",
-            user_uuid, game
+        rows = await conn.fetch(
+            """SELECT u.affiliation AS teamname, SUM(a.balance) AS totalCredits
+               FROM users u
+               JOIN accounts a ON u.id = a.user_id
+               GROUP BY u.affiliation
+               ORDER BY totalCredits DESC;"""
         )
+    return [{"teamname": r["teamname"], "totalCredits": r["totalCredits"]} for r in rows]
 
 
-async def insertIntoQueue(session_token: str, tablenum: str) -> None:
+#------------- Functions serving player game endpoints --------------#
+
+async def insertIntoQueue(session_token: str, tablenum: str):
     userId = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         await conn.execute(
-            """INSERT INTO queue(tableid, userid)
-               VALUES($1, $2)""",
-            int(tablenum), userId
+            """INSERT INTO queue (tableId, userId)
+               VALUES ($1, $2);""",
+            tablenum, userId
         )
 
 
-async def confirmPlayers(numberOfPlayers: int, tablenum: str) -> list:
-    """
-    Pick the first numberOfPlayers from the queue for this table,
-    mark them readyToJoin so the frontend can prompt them to confirm.
-    """
-    async with conn_pool.acquire() as conn:
-        rows = await conn.fetch(
-            """SELECT userid FROM queue
-               WHERE tableid = $1
-               ORDER BY timeofjoin ASC
-               LIMIT $2;""",
-            int(tablenum), numberOfPlayers
-        )
-        if not rows:
-            raise dbError(f"No players in queue for table {tablenum}")
+async def confirmParticipation(session_token: str, tablenum: str, confirmation: bool, betAmount: str):
+    # get user confirmation before moving player into game table; dropped from queue otherwise
+    uuid = await _uuidFromSession(session_token)
 
-        selected_ids = [str(r["userid"]) for r in rows]
+    try:
+        betAmount = int(betAmount)
+    except (TypeError, ValueError):
+        raise transactionError("Bet amount must be a whole number")
+    if betAmount <= 0:
+        raise transactionError("Bet amount must be greater than zero")
 
-        # Mark them as readyToJoin — explicit cast works with string list
-        await conn.execute(
-            """UPDATE queue SET readytojoin = TRUE
-               WHERE tableid = $1 AND userid = ANY($2::uuid[]);""",
-            int(tablenum), selected_ids
-        )
-    return selected_ids
-
-
-async def confirmParticipation(session_token: str, tablenum: str, confirmation: bool, betAmount: str = "0") -> bool:
-    user_uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         if confirmation:
-            try:
-                bet = int(betAmount)
-            except (TypeError, ValueError):
-                raise transactionError("Bet amount must be a whole number")
-            if bet <= 0:
-                raise transactionError("Bet amount must be greater than zero")
-
-            balance_row = await conn.fetchrow(
-                "SELECT balance FROM accounts WHERE user_id = $1;", user_uuid
-            )
-            if not balance_row or balance_row["balance"] < bet:
-                raise transactionError("Insufficient balance to place this bet")
-
-            response = await conn.execute(
-                """INSERT INTO activeplayers(userid, tableid, betamount)
-                VALUES($1, $2, $3)
-                ON CONFLICT (userid) DO UPDATE SET tableid = $2, betamount = $3;""",
-                user_uuid, int(tablenum), bet
-            )
-            await conn.execute(
-                "DELETE FROM queue WHERE userid = $1 AND tableid = $2;",
-                user_uuid, int(tablenum)
-            )
-            if not response.endswith("1"):
-                raise dbError(f"Could not confirm participation for table {tablenum}")
-        else:
-            await conn.execute(
-                "DELETE FROM queue WHERE userid = $1 AND tableid = $2;",
-                user_uuid, int(tablenum)
-            )
-    return True
-
-
-async def startGame(players: list, tablenum: str) -> str:
-    """
-    players: list of uuid strings (from activeplayers query in main.py).
-    Transitions the table to 'active', deducts bets from balances,
-    inserts a gamesplayed record. Returns the new gameId string.
-    """
-    # Convert string UUIDs to native uuid.UUID objects for asyncpg
-    player_uuids = [uuid.UUID(p) for p in players]
-
-    async with conn_pool.acquire() as conn:
-        table_row = await conn.fetchrow(
-            "SELECT gameselected FROM tables WHERE tableid = $1;", int(tablenum)
-        )
-        if not table_row:
-            raise dbError(f"Table {tablenum} does not exist")
-        game = table_row["gameselected"]
-        if not game:
-            raise dbError(f"No game selected for table {tablenum}")
-
-        async with conn.transaction():
-            await conn.execute(
-                "UPDATE tables SET status = 'active' WHERE tableid = $1;",
-                int(tablenum)
-            )
-            game_row = await conn.fetchrow(
-                """INSERT INTO gamesplayed(game, tableid)
-                   VALUES($1, $2) RETURNING gameid;""",
-                game, int(tablenum)
-            )
-            game_id = str(game_row["gameid"])
-
-            for player_uuid in player_uuids:
-                bet_row = await conn.fetchrow(
-                    "SELECT betamount FROM activeplayers WHERE userid = $1 AND tableid = $2;",
-                    player_uuid, int(tablenum)
+            async with conn.transaction():
+                # check balance before deducting
+                balance_row = await conn.fetchrow(
+                    "SELECT balance FROM accounts WHERE user_id = $1 FOR UPDATE;", uuid
                 )
-                if not bet_row:
-                    raise dbError(f"Could not find bet for player {player_uuid}")
-                bet = bet_row["betamount"]
+                if not balance_row:
+                    raise dbError("Account not found")
+                if balance_row["balance"] < betAmount:
+                    raise transactionError("Insufficient balance to place bet")
+
+                # deduct bet from balance
                 await conn.execute(
                     "UPDATE accounts SET balance = balance - $1 WHERE user_id = $2;",
-                    bet, player_uuid
+                    betAmount, uuid
                 )
+
+                # move into active players
+                response = await conn.execute(
+                    """INSERT INTO activePlayers (userId, tableId, betAmount)
+                       VALUES ($1, $2, $3);""",
+                    uuid, tablenum, betAmount
+                )
+                if not response.endswith("1"):
+                    raise dbError(f"Could not confirm participation for table {tablenum}")
+
+                # remove from queue
                 await conn.execute(
-                    """INSERT INTO gameplayerlogs(gameid, userid, initialbet, finalamount)
-                       VALUES($1, $2, $3, 0);""",
-                    uuid.UUID(game_id), player_uuid, bet
+                    "DELETE FROM queue WHERE userId = $1 AND tableId = $2;",
+                    uuid, tablenum
                 )
-
-    return game_id
-
-
-async def endGame(results: dict, tablenum: str) -> bool:
-    """
-    results: { player_uuid_str: final_amount, ... }
-    Pays out winnings, writes final amounts to logs, cleans up activeplayers,
-    resets the table to waiting.
-    """
-    async with conn_pool.acquire() as conn:
-        async with conn.transaction():
-            game_row = await conn.fetchrow(
-                """SELECT gameid FROM gamesplayed
-                   WHERE tableid = $1
-                   ORDER BY timeoffinish DESC LIMIT 1;""",
-                int(tablenum)
-            )
-            if not game_row:
-                raise dbError(f"No active game found for table {tablenum}")
-            game_id = game_row["gameid"]   # keep as native UUID for asyncpg
-
-            for player_uuid_str, final_amount in results.items():
-                final_amount = int(final_amount)
-                player_uuid = uuid.UUID(player_uuid_str)   # convert string → native UUID
+        else:
+            async with conn.transaction():
+                # remove from queue
                 await conn.execute(
-                    "UPDATE accounts SET balance = balance + $1 WHERE user_id = $2;",
-                    final_amount, player_uuid
+                    "DELETE FROM queue WHERE userId = $1 AND tableId = $2;",
+                    uuid, tablenum
                 )
+                # promote next person in queue
                 await conn.execute(
-                    """UPDATE gameplayerlogs SET finalamount = $1
-                       WHERE gameid = $2 AND userid = $3;""",
-                    final_amount, game_id, player_uuid
+                    """UPDATE queue q
+                       SET readyToJoin = TRUE
+                       WHERE q.number = (
+                           SELECT MIN(next.number)
+                           FROM queue next
+                           WHERE next.tableId = $1
+                             AND next.readyToJoin = FALSE
+                       );""",
+                    tablenum
                 )
 
-            await conn.execute(
-                "DELETE FROM activeplayers WHERE tableid = $1;", int(tablenum)
-            )
-            await conn.execute(
-                "UPDATE tables SET status = 'waiting', gameselected = '' WHERE tableid = $1;",
-                int(tablenum)
-            )
 
-    return True
-
-
-async def getParticipation(session_token: str) -> list:
-    """
-    Returns tables where the player has been marked readyToJoin.
-    """
-    user_uuid = await _uuidFromSession(session_token)
+async def getParticipation(session_token: str):
+    uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         rows = await conn.fetch(
-            """SELECT q.tableid, t.gameselected
-               FROM queue q
-               JOIN tables t ON q.tableid = t.tableid
-               WHERE q.userid = $1 AND q.readytojoin = TRUE;""",
-            user_uuid
+            """SELECT q.tableId, t.gameSelected AS game, q.readyToJoin, q.position
+               FROM (
+                   SELECT tableId, readyToJoin,
+                          ROW_NUMBER() OVER (PARTITION BY tableId ORDER BY timeOfJoin ASC) AS position
+                   FROM queue
+                   WHERE userId = $1
+               ) q
+               JOIN tables t ON q.tableId = t.tableId;""",
+            uuid
         )
-    return [{"tableId": r["tableid"], "game": r["gameselected"]} for r in rows]
+    return [dict(r) for r in rows]
 
 
-async def setGameForTable(tablenum: str, game: str) -> None:
+#------------- Functions serving manager GET endpoints --------------#
+
+async def getTablesForManager():
     async with conn_pool.acquire() as conn:
-        response = await conn.execute(
-            "UPDATE tables SET gameselected = $1 WHERE tableid = $2;",
-            game, int(tablenum)
+        rows = await conn.fetch(
+            "SELECT tableId, gameSelected, status FROM tables;"
         )
-        if not response.endswith("1"):
-            raise dbError(f"Could not set game as {game} for table {tablenum}")
+    return {
+        row["tableId"]: {"game": row["gameSelected"], "status": row["status"]}
+        for row in rows
+    }
 
 
-async def setMaxPlayersForTable(tablenum: str, max_players: int) -> None:
+async def getTableDetails(tableId: str):
+    # return queue data and players currently playing with bets
+    async with conn_pool.acquire() as conn:
+        queue = await conn.fetch(
+            """SELECT u.username AS username
+               FROM users u
+               JOIN queue q ON q.userId = u.id
+               WHERE q.tableId = $1
+               ORDER BY q.timeOfJoin ASC;""",
+            tableId
+        )
+        activePlayers = await conn.fetch(
+            """SELECT u.username AS username, ap.betAmount AS bet
+               FROM users u
+               JOIN activePlayers ap ON ap.userId = u.id
+               WHERE ap.tableId = $1;""",
+            tableId
+        )
+
+    return {
+        "queue": _convertQueue(queue),
+        "players": _convertActivePlayers(activePlayers)
+    }
+
+
+async def getManagerHome(tablenum: str):
+    return await getTableDetails(tablenum)
+
+
+async def confirmPlayers(tablenum: str):
+    # mark top N players readyToJoin based on table's max_players setting
     async with conn_pool.acquire() as conn:
         await conn.execute(
-            "UPDATE tables SET max_players = $1 WHERE tableid = $2;",
-            int(max_players), int(tablenum)
+            """UPDATE queue q
+               SET readyToJoin = TRUE
+               WHERE q.number IN (
+                   SELECT q2.number
+                   FROM queue q2
+                   JOIN tables t ON q2.tableId = t.tableId
+                   WHERE q2.tableId = $1
+                     AND q2.readyToJoin = FALSE
+                   ORDER BY q2.timeOfJoin ASC
+                   LIMIT t.max_players
+               );""",
+            tablenum
         )
+
+
+async def getTableConfiguration(tableId: str):
+    async with conn_pool.acquire() as conn:
+        configuration = await conn.fetchrow(
+            """SELECT gameSelected AS game, max_players AS maxPlayers
+               FROM tables WHERE tableId = $1;""",
+            tableId
+        )
+    if not configuration:
+        raise dbError(f"Table {tableId} not found")
+    return {
+        "game": configuration["game"],
+        "maxPlayers": configuration["maxPlayers"]
+    }
+
+
+async def flushTable(tableId: str):
+    async with conn_pool.acquire() as conn:
+        status = await conn.execute(
+            "DELETE FROM activePlayers WHERE tableId = $1;", tableId
+        )
+    if status.endswith("0"):
+        raise dbError(f"Could not flush table {tableId}")
+    return {"status": "ok"}
+
+
+async def removeFromQueue(username: str, tablenum: str):
+    async with conn_pool.acquire() as conn:
+        row = await conn.execute(
+            """DELETE FROM queue q
+               USING users u
+               WHERE q.userId = u.id
+                 AND u.username = $1
+                 AND q.tableId = $2;""",
+            username, tablenum
+        )
+        if not row.endswith("1"):
+            raise dbError(f"Could not delete {username} from table {tablenum}")
+    return {"status": "ok"}
+
+
+async def removeFromGame(username: str, tablenum: str):
+    async with conn_pool.acquire() as conn:
+        try:
+            async with conn.transaction():
+                # refund bet back to balance
+                await conn.execute(
+                    """UPDATE accounts a
+                       SET balance = balance + ap.betAmount
+                       FROM activePlayers ap
+                       JOIN users u ON u.id = ap.userId
+                       WHERE a.user_id = ap.userId
+                         AND u.username = $1
+                         AND ap.tableId = $2;""",
+                    username, tablenum
+                )
+                await conn.execute(
+                    """DELETE FROM activePlayers ap
+                       USING users u
+                       WHERE ap.userId = u.id
+                         AND u.username = $1
+                         AND ap.tableId = $2;""",
+                    username, tablenum
+                )
+        except Exception as e:
+            raise dbError(f"Could not remove {username} from {tablenum}: {str(e)}")
+    return {"status": "ok"}
+
+
+#------------- Functions serving manager POST endpoints -------------#
+
+async def setTableConfiguration(tablename: str, game: str, maxPlayers: int):
+    async with conn_pool.acquire() as conn:
+        response = await conn.execute(
+            """UPDATE tables
+               SET gameSelected = $1, max_players = $2
+               WHERE tableId = $3;""",
+            game, maxPlayers, tablename
+        )
+    if response.endswith("1"):
+        return {"status": "ok"}
+    else:
+        return {"status": "fail"}
+
+
+async def startGame(tablenum: str):
+    async with conn_pool.acquire() as conn:
+        response = await conn.execute(
+            "UPDATE tables SET status = 'running' WHERE tableId = $1;", tablenum
+        )
+    if response.endswith("1"):
+        return {"status": "ok"}
+    else:
+        raise dbError(f"Could not start game for table {tablenum}")
+
+
+async def endGame(result: dict, tablenum: str):
+    # settle game — update balances, write logs, clear active players
+    async with conn_pool.acquire() as conn:
+        try:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    """INSERT INTO gamesPlayed (game, tableId)
+                       SELECT gameSelected, tableId
+                       FROM tables
+                       WHERE tableId = $1
+                       RETURNING gameId, game;""",
+                    tablenum
+                )
+                game_id = row["gameId"]
+
+                players = await conn.fetch(
+                    """SELECT u.username, u.id, ap.betAmount
+                       FROM activePlayers ap
+                       JOIN users u ON u.id = ap.userId
+                       WHERE ap.tableId = $1;""",
+                    tablenum
+                )
+
+                balance_updates = []
+                logs = []
+
+                for p in players:
+                    final_amount = result[p["username"]]
+                    initial = p["betAmount"]
+                    change = final_amount - initial
+                    balance_updates.append((change, p["id"]))
+                    logs.append((game_id, p["id"], initial, final_amount))
+
+                await conn.executemany(
+                    """UPDATE accounts
+                       SET balance = balance + $1
+                       WHERE user_id = $2;""",
+                    balance_updates
+                )
+
+                await conn.executemany(
+                    """INSERT INTO gamePlayerLogs (gameId, userId, initialBet, finalAmount)
+                       VALUES ($1, $2, $3, $4);""",
+                    logs
+                )
+
+                await conn.execute(
+                    "DELETE FROM activePlayers WHERE tableId = $1;", tablenum
+                )
+
+                await conn.execute(
+                    "UPDATE tables SET status = 'idle' WHERE tableId = $1;", tablenum
+                )
+
+        except Exception as e:
+            raise dbError(str(e))
+    return {"status": "ok"}

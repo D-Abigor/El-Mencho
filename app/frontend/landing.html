@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The House</title>
-  <link rel="stylesheet" href="/static/base.css" />
+  <link rel="stylesheet" href="/static/base.css">
   <style>
-    body { overflow-x: hidden; }
+    body { overflow: hidden; }
 
     .hero {
       min-height: 100vh;
@@ -15,167 +15,176 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 2rem;
       position: relative;
+      padding: 40px;
     }
 
-    /* Felt table circle behind the content */
+    /* Radial felt glow */
     .hero::before {
       content: '';
       position: absolute;
-      width: 700px; height: 700px;
-      border-radius: 50%;
-      background: radial-gradient(circle, var(--felt-mid) 0%, transparent 72%);
-      border: 2px solid var(--border);
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    .suits-ring {
-      position: absolute;
       inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 50%, rgba(201,168,76,0.07) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(13,33,23,0.0) 0%, rgba(5,12,8,0.7) 100%);
       pointer-events: none;
-      overflow: hidden;
     }
-    .suits-ring span {
+
+    /* Corner suits */
+    .suit { position: absolute; font-size: 14rem; opacity: 0.04; line-height: 1; }
+    .suit-tl { top: -20px; left: -10px; transform: rotate(-15deg); }
+    .suit-tr { top: -20px; right: -10px; transform: rotate(15deg); }
+    .suit-bl { bottom: -20px; left: -10px; transform: rotate(15deg); }
+    .suit-br { bottom: -20px; right: -10px; transform: rotate(-15deg); }
+
+    /* Gold border frame */
+    .hero-frame {
       position: absolute;
-      font-size: 5rem;
-      opacity: 0.07;
-      animation: float 8s ease-in-out infinite;
+      inset: 24px;
+      border: 1px solid var(--border);
+      pointer-events: none;
     }
-    .suits-ring span:nth-child(1) { top: 8%; left: 5%;  animation-delay: 0s;    color: var(--red); }
-    .suits-ring span:nth-child(2) { top: 12%; right: 8%; animation-delay: 1.5s; color: var(--gold); }
-    .suits-ring span:nth-child(3) { bottom: 15%; left: 10%; animation-delay: 3s; color: var(--gold); }
-    .suits-ring span:nth-child(4) { bottom: 10%; right: 5%; animation-delay: 4.5s; color: var(--red); }
-    .suits-ring span:nth-child(5) { top: 50%; left: 2%;  animation-delay: 2s;   color: var(--text-muted); }
-    .suits-ring span:nth-child(6) { top: 45%; right: 3%; animation-delay: 3.5s; color: var(--text-muted); }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-18px) rotate(8deg); }
-    }
-
-    .logo-wrap { position: relative; margin-bottom: 1rem; }
-    .logo-line {
-      display: flex; align-items: center; gap: 1rem;
-      justify-content: center; margin-bottom: 0.3rem;
-    }
-    .logo-line-rule {
-      height: 1px; width: 60px;
-      background: linear-gradient(90deg, transparent, var(--gold));
-    }
-    .logo-line-rule.rev { background: linear-gradient(90deg, var(--gold), transparent); }
-    .logo-label {
-      font-family: 'Cinzel', serif;
+    .hero-frame::before, .hero-frame::after {
+      content: '◆';
+      position: absolute;
+      color: var(--gold);
       font-size: 0.7rem;
-      letter-spacing: 0.3em;
+    }
+    .hero-frame::before { top: -8px; left: 50%; transform: translateX(-50%); }
+    .hero-frame::after  { bottom: -8px; left: 50%; transform: translateX(-50%); }
+
+    .hero-eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--gold);
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s ease both;
     }
 
     .hero-title {
       font-family: 'Cinzel', serif;
-      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-size: clamp(3.5rem, 8vw, 6.5rem);
       font-weight: 900;
-      color: var(--gold);
-      line-height: 1;
-      text-shadow: 0 0 60px rgba(201,168,76,0.25);
-      margin-bottom: 0.2rem;
-      letter-spacing: 0.08em;
+      line-height: 0.95;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--cream);
+      margin-bottom: 8px;
+      animation: fadeUp 0.8s ease 0.1s both;
     }
-    .hero-title .house { color: var(--card-white); }
+
+    .hero-title span {
+      display: block;
+      background: linear-gradient(135deg, #c9a84c 0%, #f0dc8a 40%, #c9a84c 70%, #a07828 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeUp 0.8s ease 0.1s both, shimmer 4s linear 1s infinite;
+    }
 
     .hero-sub {
-      font-family: 'Crimson Pro', serif;
-      font-style: italic;
       font-size: 1.15rem;
-      color: var(--text-muted);
-      margin: 1rem 0 2.5rem;
-      letter-spacing: 0.04em;
+      font-style: italic;
+      color: var(--muted);
+      margin-bottom: 52px;
+      animation: fadeUp 0.8s ease 0.2s both;
     }
 
-    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-
-    .card-fan {
-      display: flex; justify-content: center; margin-top: 3.5rem;
-      position: relative; height: 90px;
-    }
-    .play-card {
-      position: absolute;
-      width: 54px; height: 78px;
-      background: var(--card-white);
-      border-radius: 5px;
-      box-shadow: 2px 4px 16px rgba(0,0,0,0.6);
+    .hero-actions {
       display: flex;
-      flex-direction: column;
-      padding: 4px 5px;
-      font-family: 'Cinzel', serif;
-      font-size: 0.85rem;
-      font-weight: 700;
-      transition: transform 0.3s;
+      gap: 16px;
+      animation: fadeUp 0.8s ease 0.3s both;
     }
-    .play-card:hover { transform: translateY(-12px) !important; }
-    .play-card .rank { line-height: 1; }
-    .play-card .suit-sm { font-size: 1rem; line-height: 1; }
-    .play-card.red .rank, .play-card.red .suit-sm { color: var(--red-bright); }
-    .play-card.black .rank, .play-card.black .suit-sm { color: #1a1a1a; }
-    .play-card:nth-child(1) { transform: rotate(-18deg) translateX(-90px) translateY(10px); }
-    .play-card:nth-child(2) { transform: rotate(-9deg) translateX(-45px) translateY(4px); }
-    .play-card:nth-child(3) { transform: rotate(0deg); z-index: 5; }
-    .play-card:nth-child(4) { transform: rotate(9deg) translateX(45px) translateY(4px); }
-    .play-card:nth-child(5) { transform: rotate(18deg) translateX(90px) translateY(10px); }
 
-    .footer-note {
-      margin-top: 4rem;
+    .btn-hero {
       font-family: 'Cinzel', serif;
-      font-size: 0.65rem;
+      font-size: 0.75rem;
       letter-spacing: 0.2em;
-      color: var(--text-muted);
-      opacity: 0.5;
       text-transform: uppercase;
+      padding: 16px 48px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-hero-primary {
+      background: linear-gradient(135deg, #c9a84c, #e8c96a, #c9a84c);
+      background-size: 200% auto;
+      color: #1a0e00;
+      font-weight: 700;
+      box-shadow: 0 4px 24px rgba(201,168,76,0.35), 0 0 60px rgba(201,168,76,0.08);
+      border: none;
+    }
+    .btn-hero-primary:hover {
+      background-position: right center;
+      box-shadow: 0 6px 32px rgba(201,168,76,0.55), 0 0 80px rgba(201,168,76,0.12);
+      transform: translateY(-2px);
+    }
+
+    .btn-hero-ghost {
+      background: transparent;
+      border: 1px solid var(--border-mid);
+      color: var(--gold);
+    }
+    .btn-hero-ghost:hover {
+      border-color: var(--gold);
+      background: var(--gold-dim);
+      transform: translateY(-2px);
+    }
+
+    .games-strip {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 28px;
+      animation: fadeUp 0.8s ease 0.5s both;
+    }
+
+    .game-pill {
+      font-family: 'Cinzel', serif;
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      white-space: nowrap;
     }
   </style>
 </head>
 <body>
-  <nav>
-    <a class="nav-brand" href="/">The <span>♠</span> House</a>
-    <div class="nav-links">
-      <a href="/login">Sign In</a>
-    </div>
-  </nav>
+  <div class="hero">
+    <div class="suit suit-tl">♠</div>
+    <div class="suit suit-tr">♥</div>
+    <div class="suit suit-bl">♣</div>
+    <div class="suit suit-br">♦</div>
+    <div class="hero-frame"></div>
 
-  <section class="hero">
-    <div class="suits-ring">
-      <span>♠</span><span>♦</span><span>♣</span><span>♥</span><span>♠</span><span>♦</span>
-    </div>
+    <p class="hero-eyebrow">◆ &nbsp; Welcome to the table &nbsp; ◆</p>
+    <h1 class="hero-title"><span>The House</span></h1>
+    <p class="hero-sub">Where fortunes are made and legends are written</p>
 
-    <div class="logo-wrap fade-up">
-      <div class="logo-line">
-        <span class="logo-line-rule"></span>
-        <span class="logo-label">Est. Tonight</span>
-        <span class="logo-line-rule rev"></span>
-      </div>
+    <div class="hero-actions">
+      <a href="/login" class="btn-hero btn-hero-primary">Enter the Casino</a>
+      <a href="/leaderBoard" class="btn-hero btn-hero-ghost">Leaderboard</a>
     </div>
 
-    <h1 class="hero-title fade-up fade-up-1">
-      THE <span class="house">HOUSE</span>
-    </h1>
-    <p class="hero-sub fade-up fade-up-2">Where fortune favours the bold.</p>
-
-    <div class="hero-actions fade-up fade-up-3">
-      <a href="/login" class="btn btn-gold">Enter the Floor</a>
+    <div class="games-strip">
+      <span class="game-pill">♠ Teen Patti</span>
+      <span class="game-pill">♥ Poker</span>
+      <span class="game-pill">♣ Blackjack</span>
+      <span class="game-pill">♦ Rummy</span>
+      <span class="game-pill">♠ Crazy 8s</span>
+      <span class="game-pill">♥ 3 of Spades</span>
     </div>
-
-    <div class="card-fan fade-up fade-up-4">
-      <div class="play-card black"><span class="rank">A</span><span class="suit-sm">♠</span></div>
-      <div class="play-card red"><span class="rank">K</span><span class="suit-sm">♥</span></div>
-      <div class="play-card black"><span class="rank">Q</span><span class="suit-sm">♣</span></div>
-      <div class="play-card red"><span class="rank">J</span><span class="suit-sm">♦</span></div>
-      <div class="play-card black"><span class="rank">10</span><span class="suit-sm">♠</span></div>
-    </div>
-
-    <p class="footer-note">House rules apply &nbsp;·&nbsp; Play responsibly</p>
-  </section>
+  </div>
 </body>
 </html>

@@ -1,341 +1,373 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The House — Table Control</title>
-  <link rel="stylesheet" href="/static/base.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table — The House</title>
+  <link rel="stylesheet" href="/static/base.css">
   <style>
     .table-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
+      gap: 20px;
       flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      margin-bottom: 36px;
     }
 
-    .table-switcher { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .t-btn {
-      font-family: 'Cinzel', serif;
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      padding: 0.45rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: transparent;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.18s;
-    }
-    .t-btn:hover, .t-btn.active {
-      border-color: var(--gold);
-      color: var(--gold);
-      background: rgba(201,168,76,0.08);
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
-    .control-grid {
+    .two-col {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+      gap: 20px;
     }
-    @media (max-width: 680px) { .control-grid { grid-template-columns: 1fr; } }
 
-    .player-list { list-style: none; }
-    .player-item {
+    @media (max-width: 700px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    .section-head {
+      font-family: 'Cinzel', serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.65rem 0;
-      border-bottom: 1px solid rgba(201,168,76,0.08);
-      font-size: 0.95rem;
     }
-    .player-item:last-child { border-bottom: none; }
-    .player-name { font-family: 'Cinzel', serif; font-size: 0.88rem; letter-spacing: 0.05em; }
-    .player-bet { color: var(--gold); font-size: 0.85rem; }
 
-    .queue-entry {
+    .player-row {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.55rem 0;
-      border-bottom: 1px solid rgba(201,168,76,0.06);
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.07);
     }
-    .queue-num {
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      background: rgba(201,168,76,0.15);
-      border: 1px solid var(--gold);
-      display: flex; align-items: center; justify-content: center;
+    .player-row:last-child { border-bottom: none; }
+
+    .player-name {
       font-family: 'Cinzel', serif;
-      font-size: 0.65rem;
+      font-size: 0.88rem;
+      color: var(--cream);
+      letter-spacing: 0.04em;
+    }
+
+    .player-actions { display: flex; gap: 8px; align-items: center; }
+
+    .bet-amount {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
       color: var(--gold);
+      margin-right: 8px;
+    }
+
+    .queue-pos-num {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      color: var(--muted);
+      width: 28px;
       flex-shrink: 0;
     }
 
-    .action-panel { display: flex; flex-direction: column; gap: 0.9rem; }
-    .action-row { display: flex; gap: 0.75rem; align-items: flex-end; }
+    .empty-state {
+      font-style: italic;
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 20px 0;
+    }
 
-    select option { background: var(--felt); }
-
-    .result-form { display: none; }
-    .result-form.open { display: block; }
-    .result-entries { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
-    .result-entry {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.5rem;
+    /* End game modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5,12,8,0.88);
+      z-index: 200;
       align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
     }
-    .result-entry label { font-size: 0.82rem; color: var(--text-muted); font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
-    .result-entry input { padding: 0.5rem 0.75rem; font-size: 0.95rem; }
+    .modal-overlay.open { display: flex; }
 
-    .status-dot {
-      display: inline-block;
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      margin-right: 0.4rem;
+    .modal {
+      background: var(--felt-mid);
+      border: 1px solid var(--border-mid);
+      border-radius: 4px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+      animation: fadeUp 0.3s ease both;
+      position: relative;
     }
-    .status-dot.waiting { background: var(--text-muted); }
-    .status-dot.active  { background: #4ade80; box-shadow: 0 0 6px #4ade80; animation: shimmer 1.5s infinite; }
+
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .modal-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 20px;
+    }
+
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .result-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      color: var(--muted);
+      width: 140px;
+      flex-shrink: 0;
+    }
+
+    .result-input { flex: 1; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+    #refreshTimer {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
   <nav>
-    <a class="nav-brand" href="/">The <span>♠</span> House</a>
-    <div class="nav-links">
-      <a href="/table?tablenum=1">Tables</a>
-      <a href="/logout">Leave</a>
-    </div>
+    <a href="/tables" class="nav-brand">◆ The House</a>
+    <ul class="nav-links">
+      <li><a href="/tables">All Tables</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
   </nav>
 
-  <main class="page">
-    <div class="table-header fade-up">
+  <div class="page-wide">
+    <div class="table-header animate-in">
       <div>
-        <h1>
-          <span class="status-dot {{ 'active' if players else 'waiting' }}"></span>
-          Table {{ tablenum }}
-        </h1>
-        <p style="color:var(--text-muted); font-style:italic; margin-top:0.2rem;">Manager control panel</p>
+        <h1 class="page-title" id="tableTitle">Table</h1>
+        <p class="page-subtitle">Live queue and active players</p>
       </div>
-      <div class="table-switcher">
-        {% for n in range(1, 7) %}
-          <a href="/table?tablenum={{ n }}" class="t-btn {% if tablenum|string == n|string %}active{% endif %}">
-            Table {{ n }}
-          </a>
-        {% endfor %}
+      <div class="header-actions">
+        <span id="refreshTimer"></span>
+        <button class="btn btn-outline btn-sm" onclick="pullPlayers()">Pull Players</button>
+        <button class="btn btn-outline btn-sm" onclick="configureTable()">Configure</button>
+        <button class="btn btn-outline btn-sm" onclick="startGame()">Start Game</button>
+        <button class="btn btn-gold btn-sm" onclick="openEndGame()">End Game</button>
+        <button class="btn btn-danger btn-sm" onclick="flushTable()">Flush Table</button>
       </div>
     </div>
 
-    <div class="control-grid">
-
-      <!-- Queue & Players -->
-      <div style="display:flex; flex-direction:column; gap:1.5rem;">
-
-        <div class="panel fade-up fade-up-1">
-          <div class="panel-header" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-            <h3>Active Players</h3>
-            <span class="badge badge-green">{{ players|length }} seated</span>
-          </div>
-          {% if players %}
-            <ul class="player-list">
-              {% for username, bet in players.items() %}
-                <li class="player-item">
-                  <span class="player-name">{{ username }}</span>
-                  <span class="player-bet">¢ {{ bet }}</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p style="color:var(--text-muted); font-style:italic; font-size:0.9rem;">No players seated yet.</p>
-          {% endif %}
+    <div class="two-col animate-in stagger-2">
+      <!-- Queue -->
+      <div class="card">
+        <div class="section-head">
+          <span>♠ Queue</span>
+          <span id="queueCount" style="color:var(--muted);font-size:0.6rem;"></span>
         </div>
-
-        <div class="panel fade-up fade-up-2">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-            <h3>Queue</h3>
-            <span class="badge badge-gold">{{ queue|length }} waiting</span>
-          </div>
-          {% if queue %}
-            {% for pos, username in queue.items() %}
-              <div class="queue-entry">
-                <span class="queue-num">{{ pos }}</span>
-                <span style="font-size:0.93rem;">{{ username }}</span>
-              </div>
-            {% endfor %}
-          {% else %}
-            <p style="color:var(--text-muted); font-style:italic; font-size:0.9rem;">Queue is empty.</p>
-          {% endif %}
-        </div>
-
-      </div>
-
-      <!-- Controls -->
-      <div class="panel fade-up fade-up-3">
-        <h3 style="margin-bottom:1.5rem;">Controls</h3>
-        <div class="action-panel" id="controls">
-
-          <!-- Configure game -->
-          <div class="form-group">
-            <label>Game</label>
-            <select id="gameSelect">
-              <option value="">— select game —</option>
-              <option value="teenPatti">Teen Patti</option>
-              <option value="poker">Poker</option>
-              <option value="spadesOf3">Spades of 3</option>
-              <option value="blackjack">Blackjack</option>
-              <option value="rummy">Rummy</option>
-              <option value="crazy8s">Crazy 8s</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Max Players</label>
-            <input type="number" id="maxPlayers" min="2" max="10" value="6" />
-          </div>
-          <button class="btn btn-outline" onclick="configureTable()">Apply Config</button>
-
-          <hr class="divider" />
-
-          <!-- Pull from queue -->
-          <div class="action-row">
-            <div class="form-group" style="flex:1; margin-bottom:0;">
-              <label>Pull from Queue</label>
-              <input type="number" id="pullCount" min="1" max="10" value="2" />
-            </div>
-            <button class="btn btn-gold" onclick="confirmPlayers()" style="flex-shrink:0;">
-              Notify Players
-            </button>
-          </div>
-
-          <hr class="divider" />
-
-          <!-- Start / End game -->
-          <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-            <button class="btn btn-gold" onclick="startGame()" style="flex:1;">▶ Start Game</button>
-            <button class="btn btn-red" onclick="openEndForm()" style="flex:1;">■ End Game</button>
-          </div>
-
-          <!-- End game results form — populated dynamically with real UUIDs -->
-          <div class="result-form" id="resultForm">
-            <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:0.75rem; font-style:italic;">
-              Enter each player's final payout:
-            </p>
-            <div class="result-entries" id="resultEntries">
-              <!-- Populated by openEndForm() via /table/players API -->
-            </div>
-            <button class="btn btn-red" onclick="endGame()" style="width:100%;">Confirm Results</button>
-          </div>
-
-          <div id="ctrlFeedback" style="display:none; margin-top:0.5rem;"></div>
+        <div id="queueList">
+          <p class="empty-state">Loading...</p>
         </div>
       </div>
 
+      <!-- Active Players -->
+      <div class="card">
+        <div class="section-head">
+          <span>♦ Active Players</span>
+          <span id="playerCount" style="color:var(--muted);font-size:0.6rem;"></span>
+        </div>
+        <div id="playerList">
+          <p class="empty-state">Loading...</p>
+        </div>
+      </div>
     </div>
-  </main>
+
+    <div style="margin-top:24px; animate-in stagger-3">
+      <a href="/tables" class="btn btn-outline btn-sm">← All Tables</a>
+    </div>
+  </div>
+
+  <!-- End Game Modal -->
+  <div class="modal-overlay" id="endGameModal">
+    <div class="modal">
+      <h2 class="modal-title">End Game — Submit Results</h2>
+      <p style="font-size:0.9rem; color:var(--muted); font-style:italic; margin-bottom:20px;">Enter final credit amount for each player</p>
+      <div id="resultFields"></div>
+      <div class="modal-actions">
+        <button class="btn btn-gold" onclick="submitEndGame()">Submit Results</button>
+        <button class="btn btn-outline" onclick="document.getElementById('endGameModal').classList.remove('open')">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const tablenum = "{{ tablenum }}";
+    const tableId = window.location.pathname.split('/')[2];
+    document.getElementById('tableTitle').textContent = `Table ${tableId}`;
 
-    async function api(url, body) {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      return res;
+    let activePlayers = {};
+
+    async function loadTableData() {
+      try {
+        const res = await fetch(`/table/${tableId}`);
+        // Parse the page's data via a dedicated JSON endpoint equivalent
+        // Since this is a template page, we re-use the queue endpoint
+        await refreshData();
+      } catch(e) {}
     }
 
-    function feedback(msg, type = 'success') {
-      const el = document.getElementById('ctrlFeedback');
-      el.style.display = 'block';
-      el.className = `alert alert-${type}`;
-      el.textContent = msg;
-      setTimeout(() => { el.style.display = 'none'; }, 3500);
+    async function refreshData() {
+      try {
+        const res = await fetch(`/table/${tableId}`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        // The endpoint returns HTML; data is embedded at page load
+        // For live updates we rely on the data rendered server-side on load
+        // and re-fetch every 8s by reloading the data section via JSON endpoint
+      } catch(e) {}
     }
 
-    async function configureTable() {
-      const game = document.getElementById('gameSelect').value;
-      const max  = document.getElementById('maxPlayers').value;
-      const res = await api('/table/configure', { tablenum, game, max_players: parseInt(max) });
-      if (res.ok) { feedback('✓ Table configured.'); }
-      else        { feedback('✗ Configuration failed.', 'error'); }
+    // Render queue from server-rendered data
+    const serverQueue   = {{ details.queue | tojson }};
+    const serverPlayers = {{ details.players | tojson }};
+
+    function renderQueue(queue) {
+      const list = document.getElementById('queueList');
+      const keys = Object.keys(queue);
+      document.getElementById('queueCount').textContent = `${keys.length} waiting`;
+      if (keys.length === 0) {
+        list.innerHTML = '<p class="empty-state">Queue is empty</p>';
+        return;
+      }
+      list.innerHTML = keys.map(pos => `
+        <div class="player-row">
+          <span class="queue-pos-num">#${pos}</span>
+          <span class="player-name">${queue[pos]}</span>
+          <div class="player-actions">
+            <button class="btn btn-danger btn-sm" onclick="removeFromQueue('${queue[pos]}')">Remove</button>
+          </div>
+        </div>
+      `).join('');
     }
 
-    async function confirmPlayers() {
-      const n = parseInt(document.getElementById('pullCount').value);
-      const res = await api('/table/confirmPlayers', { tablenum, numberOfPlayers: n });
-      if (res.ok) { feedback(`✓ ${n} player(s) notified.`); }
-      else        { feedback('✗ Could not notify players.', 'error'); }
+    function renderPlayers(players) {
+      const list = document.getElementById('playerList');
+      const keys = Object.keys(players);
+      document.getElementById('playerCount').textContent = `${keys.length} seated`;
+      activePlayers = players;
+      if (keys.length === 0) {
+        list.innerHTML = '<p class="empty-state">No active players</p>';
+        return;
+      }
+      list.innerHTML = keys.map(name => `
+        <div class="player-row">
+          <span class="player-name">${name}</span>
+          <div class="player-actions">
+            <span class="bet-amount">${players[name]} cr</span>
+            <button class="btn btn-danger btn-sm" onclick="removeFromGame('${name}')">Remove</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    renderQueue(serverQueue);
+    renderPlayers(serverPlayers);
+
+    async function pullPlayers() {
+      await fetch(`/table/${tableId}/pull`);
+      location.reload();
+    }
+
+    function configureTable() {
+      window.location.href = `/table/${tableId}/configure`;
     }
 
     async function startGame() {
-      const res = await api('/table/startGame', { tablenum });
-      if (res.ok) { feedback('✓ Game started!'); window.location.reload(); }
-      else        { feedback('✗ Could not start game.', 'error'); }
+      await fetch(`/table/${tableId}/start`, { method: 'POST' });
+      location.reload();
     }
 
-    // Fetch the live uuid→username map from the server, then render the end-game form.
-    // This is the only correct way to get UUIDs client-side — the Jinja template only
-    // has username→bet, not uuid→username.
-    async function openEndForm() {
-      const form = document.getElementById('resultForm');
-      const entries = document.getElementById('resultEntries');
-
-      // Fetch current active players with their UUIDs
-      try {
-        const res = await fetch(`/table/players?tablenum=${tablenum}`);
-        if (!res.ok) {
-          feedback('✗ Could not load player list.', 'error');
-          return;
-        }
-        const uuidToUsername = await res.json(); // { uuid: username, ... }
-
-        entries.innerHTML = '';
-        const uuids = Object.keys(uuidToUsername);
-        if (uuids.length === 0) {
-          feedback('No active players to pay out.', 'error');
-          return;
-        }
-        uuids.forEach(uuid => {
-          const username = uuidToUsername[uuid];
-          const div = document.createElement('div');
-          div.className = 'result-entry';
-          div.dataset.uuid = uuid;
-          div.innerHTML = `
-            <label>${username}</label>
-            <input type="number" min="0" placeholder="final ¢" class="final-amt" />
-          `;
-          entries.appendChild(div);
-        });
-
-        form.classList.add('open');
-      } catch (err) {
-        feedback('✗ Network error loading players.', 'error');
-      }
+    async function flushTable() {
+      if (!confirm('Flush all active players from this table?')) return;
+      await fetch(`/table/${tableId}/flush`);
+      location.reload();
     }
 
-    async function endGame() {
-      const entryEls = document.querySelectorAll('#resultEntries .result-entry');
-      const results = {};
-      let valid = true;
-      entryEls.forEach(entry => {
-        const uuid = entry.dataset.uuid;
-        const amt  = entry.querySelector('.final-amt').value;
-        if (!uuid || amt === '') { valid = false; return; }
-        results[uuid] = parseInt(amt);
-      });
-      if (!valid || Object.keys(results).length === 0) {
-        feedback('✗ Fill in all payout amounts before confirming.', 'error');
+    async function removeFromQueue(username) {
+      await fetch(`/table/${tableId}/queue?removePlayer=${encodeURIComponent(username)}`);
+      location.reload();
+    }
+
+    async function removeFromGame(username) {
+      await fetch(`/table/${tableId}/remove?removePlayer=${encodeURIComponent(username)}`);
+      location.reload();
+    }
+
+    function openEndGame() {
+      const fields = document.getElementById('resultFields');
+      const players = Object.keys(activePlayers);
+      if (players.length === 0) {
+        alert('No active players at this table.');
         return;
       }
-      const res = await api('/table/endGame', { tablenum, results });
+      fields.innerHTML = players.map(name => `
+        <div class="result-row">
+          <span class="result-name">${name}</span>
+          <input type="number" class="result-input" data-player="${name}"
+                 placeholder="Final amount" min="0"
+                 style="background:rgba(0,0,0,0.3);border:1px solid var(--border-mid);border-radius:3px;color:var(--cream);font-family:'Crimson Pro',serif;font-size:1rem;padding:8px 12px;outline:none;width:100%">
+        </div>
+      `).join('');
+      document.getElementById('endGameModal').classList.add('open');
+    }
+
+    async function submitEndGame() {
+      const inputs = document.querySelectorAll('#resultFields input');
+      const results = {};
+      for (const input of inputs) {
+        const val = parseInt(input.value);
+        if (isNaN(val) || val < 0) { alert(`Enter a valid amount for ${input.dataset.player}`); return; }
+        results[input.dataset.player] = val;
+      }
+      const res = await fetch(`/table/${tableId}/end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tablenum: tableId, results })
+      });
       if (res.ok) {
-        feedback('✓ Game ended and results saved.');
-        setTimeout(() => window.location.reload(), 1500);
-      } else {
-        feedback('✗ Could not end game.', 'error');
+        document.getElementById('endGameModal').classList.remove('open');
+        location.reload();
       }
     }
+
+    // Auto-refresh every 8 seconds
+    let countdown = 8;
+    const timer = document.getElementById('refreshTimer');
+    setInterval(() => {
+      countdown--;
+      timer.textContent = `Refreshing in ${countdown}s`;
+      if (countdown <= 0) { countdown = 8; location.reload(); }
+    }, 1000);
   </script>
 </body>
 </html>

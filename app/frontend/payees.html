@@ -1,80 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The House — Pay a Teammate</title>
-  <link rel="stylesheet" href="/static/base.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transfer Credits — The House</title>
+  <link rel="stylesheet" href="/static/base.css">
   <style>
     .payee-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 0.9rem;
-      margin-top: 1.5rem;
+      gap: 14px;
+      margin-top: 8px;
     }
+
     .payee-card {
-      background: rgba(0,0,0,0.4);
+      background: var(--felt-mid);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.1rem 1.25rem;
+      border-radius: 4px;
+      padding: 20px 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem;
-      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
       text-decoration: none;
-      transition: all 0.2s;
     }
+
     .payee-card:hover {
       border-color: var(--gold);
-      background: rgba(201,168,76,0.07);
-      box-shadow: var(--shadow-gold);
-      transform: translateY(-2px);
+      box-shadow: 0 0 0 1px var(--gold-dim), 0 4px 16px rgba(0,0,0,0.3);
     }
+
     .payee-name {
       font-family: 'Cinzel', serif;
-      font-size: 0.9rem;
-      color: var(--text-main);
-      letter-spacing: 0.05em;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      color: var(--cream);
     }
-    .payee-arrow { color: var(--gold); opacity: 0.5; font-size: 1.1rem; }
-    .payee-card:hover .payee-arrow { opacity: 1; }
+
+    .payee-arrow {
+      color: var(--gold);
+      opacity: 0.4;
+      font-size: 0.9rem;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .payee-card:hover .payee-arrow { opacity: 1; transform: translateX(3px); }
+
+    .empty-state {
+      font-style: italic;
+      color: var(--muted);
+      padding: 32px 0;
+    }
   </style>
 </head>
 <body>
   <nav>
-    <a class="nav-brand" href="/">The <span>♠</span> House</a>
-    <div class="nav-links">
-      <a href="/home">Home</a>
-      <a href="/play">Play</a>
-      <a href="/logout">Leave</a>
-    </div>
+    <a href="/home" class="nav-brand">◆ The House</a>
+    <ul class="nav-links">
+      <li><a href="/play">Play</a></li>
+      <li><a href="/payees">Transfer</a></li>
+      <li><a href="/leaderBoard">Leaderboard</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
   </nav>
 
-  <main class="page-md">
-    <h1 class="fade-up" style="margin-bottom:0.4rem;">Send Credits</h1>
-    <p class="fade-up fade-up-1" style="color:var(--text-muted); font-style:italic; margin-bottom:2rem;">
-      Select a teammate to pay
-    </p>
+  <div class="page">
+    <h1 class="page-title animate-in">Transfer Credits</h1>
+    <p class="page-subtitle animate-in stagger-1">Select a teammate to send credits to</p>
 
     {% if payees %}
-      <div class="payee-grid fade-up fade-up-2">
+      <div class="payee-grid">
         {% for payee in payees %}
-          <a href="/pay?to={{ payee }}" class="payee-card">
+          <a href="/pay?to={{ payee }}" class="payee-card animate-in stagger-{{ loop.index if loop.index <= 5 else 5 }}">
             <span class="payee-name">{{ payee }}</span>
             <span class="payee-arrow">→</span>
           </a>
         {% endfor %}
       </div>
     {% else %}
-      <div class="panel fade-up fade-up-2" style="text-align:center; color:var(--text-muted); font-style:italic;">
-        No teammates found on your roster.
-      </div>
+      <p class="empty-state">No teammates found on your team.</p>
     {% endif %}
 
-    <div style="margin-top:2rem;" class="fade-up fade-up-3">
-      <a href="/home" class="btn btn-ghost">← Back to Account</a>
+    <div style="margin-top: 36px;">
+      <a href="/home" class="btn btn-outline">← Back to Dashboard</a>
     </div>
-  </main>
+  </div>
 </body>
 </html>

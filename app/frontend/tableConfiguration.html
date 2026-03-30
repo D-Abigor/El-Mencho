@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configure Table — The House</title>
+  <link rel="stylesheet" href="/static/base.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .config-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--felt-mid);
+      border: 1px solid var(--border-mid);
+      border-radius: 4px;
+      padding: 40px 36px;
+      position: relative;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .config-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .config-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--cream);
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .config-sub {
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 30px;
+    }
+
+    .btn-submit { width: 100%; padding: 14px; font-size: 0.78rem; margin-top: 8px; }
+
+    .back-link {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--gold); }
+
+    select option { background: #1a2e22; }
+  </style>
+</head>
+<body>
+  <div class="config-card">
+    <h1 class="config-title">Configure Table</h1>
+    <p class="config-sub" id="tableSubtitle">Update game and player settings</p>
+
+    <form id="configForm">
+      <input type="hidden" id="tablenum" name="tablenum">
+
+      <div class="form-group">
+        <label class="label" for="game">Game</label>
+        <select id="game" name="game">
+          <option value="Teen Patti">Teen Patti</option>
+          <option value="Poker">Poker</option>
+          <option value="3 of spades">3 of Spades</option>
+          <option value="Blackjack">Blackjack</option>
+          <option value="Rummy">Rummy</option>
+          <option value="Crazy 8s">Crazy 8s</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="maxPlayers">Max Players</label>
+        <input type="number" id="maxPlayers" name="maxPlayers" min="2" max="12" placeholder="6">
+      </div>
+
+      <button type="submit" class="btn btn-gold btn-submit">Save Configuration</button>
+    </form>
+  </div>
+
+  <a class="back-link" id="backLink" href="/tables">← Back to table</a>
+
+  <script>
+    const tableId = window.location.pathname.split('/')[2];
+    document.getElementById('tablenum').value = tableId;
+    document.getElementById('tableSubtitle').textContent = `Table ${tableId} — adjust game and max players`;
+    document.getElementById('backLink').href = `/table/${tableId}`;
+
+    // Pre-fill from server data
+    const currentGame    = "{{ details.game }}";
+    const currentMax     = {{ details.maxPlayers }};
+    document.getElementById('game').value       = currentGame;
+    document.getElementById('maxPlayers').value = currentMax;
+
+    document.getElementById('configForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch(`/table/${tableId}/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tablenum: tableId,
+          game: document.getElementById('game').value,
+          maxPlayers: parseInt(document.getElementById('maxPlayers').value)
+        })
+      });
+      if (res.ok) window.location.href = `/table/${tableId}`;
+    });
+  </script>
+</body>
+</html>

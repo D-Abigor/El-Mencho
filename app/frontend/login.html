@@ -1,183 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign In — The House</title>
-  <link rel="stylesheet" href="/static/base.css" />
+  <link rel="stylesheet" href="/static/base.css">
   <style>
     body {
-      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem 1rem;
+      min-height: 100vh;
+      padding: 40px 20px;
     }
 
     .login-wrap {
       width: 100%;
       max-width: 420px;
+      animation: fadeUp 0.6s ease both;
     }
 
     .login-header {
       text-align: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: 40px;
     }
-    .login-header .brand {
+
+    .login-logo {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .login-title {
       font-family: 'Cinzel', serif;
       font-size: 2rem;
-      font-weight: 900;
-      color: var(--gold);
-      letter-spacing: 0.1em;
-      display: block;
-      margin-bottom: 0.2rem;
-    }
-    .login-header .brand span { color: var(--red-bright); }
-    .login-header p {
-      font-style: italic;
-      color: var(--text-muted);
-      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--cream);
+      letter-spacing: 0.08em;
     }
 
     .login-card {
-      background: rgba(0,0,0,0.55);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 2.25rem 2rem;
-      box-shadow: var(--shadow-deep), 0 0 40px rgba(0,0,0,0.5);
+      background: var(--felt-mid);
+      border: 1px solid var(--border-mid);
+      border-radius: 4px;
+      padding: 40px 36px;
       position: relative;
-      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.05);
     }
+
     .login-card::before {
-      content: '♠';
-      position: absolute;
-      font-size: 9rem;
-      color: var(--gold);
-      opacity: 0.03;
-      right: -1.5rem;
-      bottom: -2rem;
-      pointer-events: none;
-      font-family: serif;
-    }
-
-    .login-card .form-group:last-of-type { margin-bottom: 1.75rem; }
-
-    .form-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .form-footer .btn { flex: 1; min-width: 120px; }
-
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 1.5rem;
-      color: var(--text-muted);
-      font-size: 0.88rem;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .back-link:hover { color: var(--gold); }
-
-    /* subtle top bar */
-    .login-card::after {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold), var(--red), var(--gold), transparent);
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
     }
+
+    .corner-suit {
+      position: absolute;
+      font-size: 1.2rem;
+      color: var(--gold);
+      opacity: 0.2;
+    }
+    .corner-suit.tl { top: 12px; left: 14px; }
+    .corner-suit.tr { top: 12px; right: 14px; }
+    .corner-suit.bl { bottom: 12px; left: 14px; }
+    .corner-suit.br { bottom: 12px; right: 14px; }
+
+    .form-group { margin-bottom: 22px; }
+
+    .btn-submit {
+      width: 100%;
+      margin-top: 8px;
+      padding: 14px;
+      font-size: 0.78rem;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 22px;
+    }
+
+    .back-link a {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .back-link a:hover { color: var(--gold); }
   </style>
 </head>
 <body>
-  <div class="login-wrap fade-up">
+  <div class="login-wrap">
     <div class="login-header">
-      <a href="/" class="brand">The <span>♠</span> House</a>
-      <p>Show your hand to enter</p>
+      <span class="login-logo">◆ The House ◆</span>
+      <h1 class="login-title">Sign In</h1>
     </div>
 
     <div class="login-card">
-      <form id="loginForm">
+      <span class="corner-suit tl">♠</span>
+      <span class="corner-suit tr">♥</span>
+      <span class="corner-suit bl">♣</span>
+      <span class="corner-suit br">♦</span>
+
+      <form method="POST" action="/login" id="loginForm">
         <div class="form-group">
-          <label for="username">Player Handle</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            placeholder="your username"
-            autocomplete="username"
-            required
-          />
+          <label class="label" for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
         </div>
 
         <div class="form-group">
-          <label for="password">Passphrase</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            required
-          />
+          <label class="label" for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
         </div>
 
-        <div id="loginError" style="display:none; margin-bottom:1rem;"></div>
-
-        <div class="form-footer">
-          <button type="submit" class="btn btn-gold">Take a Seat</button>
-        </div>
+        <button type="submit" class="btn btn-gold btn-submit">Enter the House</button>
       </form>
     </div>
 
-    <a href="/" class="back-link">← Back to the lobby</a>
+    <div class="back-link">
+      <a href="/">← Back to lobby</a>
+    </div>
   </div>
 
   <script>
+    // Submit as JSON to match FastAPI model
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = e.target.querySelector('button[type=submit]');
-      const errEl = document.getElementById('loginError');
-      btn.disabled = true;
-      btn.textContent = 'Dealing…';
-      errEl.style.display = 'none';
-
-      const payload = {
-        username: document.getElementById('username').value,
-        password: document.getElementById('password').value,
-      };
-
-      try {
-        // Use redirect:'manual' so fetch() never follows the redirect internally.
-        // The server now returns 200 JSON on success, so the browser stores the
-        // Set-Cookie header directly (it only drops cookies on redirected responses).
-        const res = await fetch('/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          redirect: 'manual',
-        });
-
-        if (res.ok) {
-          // Cookie is now stored — navigate to home
-          window.location.href = '/home';
-        } else {
-          // 401 from authenticationFailure handler — show inline error
-          errEl.style.display = 'block';
-          errEl.className = 'alert alert-error';
-          errEl.textContent = '✗ Invalid username or password.';
-          btn.disabled = false;
-          btn.textContent = 'Take a Seat';
-        }
-      } catch (err) {
-        errEl.style.display = 'block';
-        errEl.className = 'alert alert-error';
-        errEl.textContent = 'Network error. Please try again.';
-        btn.disabled = false;
-        btn.textContent = 'Take a Seat';
-      }
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value
+        })
+      });
+      if (res.redirected) window.location.href = res.url;
     });
   </script>
 </body>

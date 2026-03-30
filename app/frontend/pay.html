@@ -1,145 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The House — Transfer</title>
-  <link rel="stylesheet" href="/static/base.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Send Credits — The House</title>
+  <link rel="stylesheet" href="/static/base.css">
   <style>
-    .transfer-card {
-      position: relative;
-      overflow: hidden;
-    }
-    .transfer-card::before {
-      content: '♦';
-      position: absolute;
-      font-size: 10rem;
-      color: var(--red);
-      opacity: 0.03;
-      right: -2rem;
-      top: -1.5rem;
-      pointer-events: none;
-    }
-    .amount-hint {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      font-style: italic;
-      margin-top: 0.25rem;
-    }
-    .to-badge {
-      display: inline-flex;
+    body {
+      display: flex;
       align-items: center;
-      gap: 0.5rem;
-      background: rgba(201,168,76,0.1);
-      border: 1px solid var(--gold);
-      border-radius: 3rem;
-      padding: 0.35rem 1rem;
-      font-family: 'Cinzel', serif;
-      font-size: 0.85rem;
-      color: var(--gold);
-      margin-bottom: 1.5rem;
+      justify-content: center;
+      min-height: 100vh;
+      flex-direction: column;
+      gap: 32px;
+      padding: 40px 20px;
     }
+
+    .pay-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--felt-mid);
+      border: 1px solid var(--border-mid);
+      border-radius: 4px;
+      padding: 40px 36px;
+      position: relative;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .pay-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .pay-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--cream);
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .pay-sub {
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 30px;
+    }
+
+    .recipient-display {
+      background: rgba(201,168,76,0.08);
+      border: 1px solid var(--border-mid);
+      border-radius: 3px;
+      padding: 12px 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      color: var(--gold);
+      letter-spacing: 0.06em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .recipient-display .suit { opacity: 0.5; }
+
+    .btn-submit { width: 100%; padding: 14px; font-size: 0.78rem; margin-top: 8px; }
+
+    .back-link {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--gold); }
   </style>
 </head>
 <body>
-  <nav>
-    <a class="nav-brand" href="/">The <span>♠</span> House</a>
-    <div class="nav-links">
-      <a href="/home">Home</a>
-      <a href="/play">Play</a>
-      <a href="/logout">Leave</a>
-    </div>
-  </nav>
+  <div class="pay-card">
+    <h1 class="pay-title">Send Credits</h1>
+    <p class="pay-sub">Transfer funds to a teammate</p>
 
-  <main class="page-sm">
-    <h1 class="fade-up" style="margin-bottom:0.3rem;">Transfer Credits</h1>
-    <p class="fade-up fade-up-1" style="color:var(--text-muted); font-style:italic; margin-bottom:2rem;">
-      Move chips across the table
-    </p>
+    <form id="payForm">
+      <div class="form-group">
+        <label class="label">Recipient</label>
+        {% if recipient %}
+          <div class="recipient-display">
+            <span class="suit">◆</span>
+            <span>{{ recipient }}</span>
+          </div>
+          <input type="hidden" name="recepient" id="recepient" value="{{ recipient }}">
+        {% else %}
+          <input type="text" name="recepient" id="recepient" placeholder="Username" required>
+        {% endif %}
+      </div>
 
-    <div class="panel transfer-card fade-up fade-up-2">
-      {% if recipient %}
-        <div class="to-badge">
-          <span>→</span>
-          <span>{{ recipient }}</span>
-        </div>
-      {% endif %}
+      <div class="form-group">
+        <label class="label" for="amount">Amount</label>
+        <input type="number" id="amount" name="amount" placeholder="0" min="1" required>
+      </div>
 
-      <form id="payForm">
-        <div class="form-group">
-          <label for="recepient">Recipient</label>
-          <input
-            type="text"
-            id="recepient"
-            name="recepient"
-            value="{{ recipient or '' }}"
-            placeholder="username"
-            required
-          />
-        </div>
+      <button type="submit" class="btn btn-gold btn-submit">Send Credits</button>
+    </form>
+  </div>
 
-        <div class="form-group">
-          <label for="amount">Amount (credits)</label>
-          <input
-            type="number"
-            id="amount"
-            name="amount"
-            min="1"
-            placeholder="0"
-            required
-          />
-          <span class="amount-hint">Whole numbers only</span>
-        </div>
-
-        <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
-          <button type="submit" class="btn btn-gold" style="flex:1;">Send</button>
-          <a href="/payees" class="btn btn-ghost">Cancel</a>
-        </div>
-      </form>
-
-      <div id="feedback" style="display:none; margin-top:1rem;"></div>
-    </div>
-  </main>
+  <a href="/payees" class="back-link">← Choose a different recipient</a>
 
   <script>
     document.getElementById('payForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = e.target.querySelector('button[type=submit]');
-      btn.disabled = true; btn.textContent = 'Sending…';
-
-      const recepient = document.getElementById('recepient').value;
-      const amount    = parseInt(document.getElementById('amount').value);
-
-      const fb = document.getElementById('feedback');
-
-      try {
-        const res = await fetch('/transfer', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recepient, amount }),
-        });
-
-        // Backend now returns JSON for both success and error paths
-        if (res.ok) {
-          const data = await res.json();
-          fb.style.display = 'block';
-          fb.className = 'alert alert-success';
-          fb.textContent = `✓ ${data.message}`;
-          e.target.reset();
-          document.getElementById('recepient').value = recepient;
-        } else {
-          // Error page HTML returned with non-2xx status — display inline message
-          fb.style.display = 'block';
-          fb.className = 'alert alert-error';
-          fb.textContent = '✗ Transfer failed. Check the recipient and your balance.';
-        }
-      } catch (err) {
-        fb.style.display = 'block';
-        fb.className = 'alert alert-error';
-        fb.textContent = 'Network error. Please try again.';
+      const res = await fetch('/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recepient: document.getElementById('recepient').value,
+          amount: parseInt(document.getElementById('amount').value)
+        })
+      });
+      if (res.ok) {
+        const html = await res.text();
+        document.open(); document.write(html); document.close();
       }
-
-      btn.disabled = false; btn.textContent = 'Send';
     });
   </script>
 </body>
