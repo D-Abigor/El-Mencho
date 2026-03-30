@@ -84,8 +84,8 @@ def _gameLogstoDescriptive(gamelogs: list[asyncpg.Record]):
     cleanedLogs = []
     for entry in gamelogs:
         game = entry["game"]
-        time = entry["timeOfFinish"]
-        creditChange = entry["finalAmount"] - entry["initialBet"]
+        time = entry["timeoffinish"]
+        creditChange = entry["finalamount"] - entry["initialbet"]
         if creditChange >= 0:
             line = f"you played {game} at {time} and won {abs(creditChange)}"
         else:
@@ -126,7 +126,7 @@ def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
     queues = {}
     for queue in activeQueue:
         queues[queue["game"]] = queue["position"]
-    for game in ['teenPatti', 'poker', 'spadesOf3', 'blackjack', 'rummy', 'crazy8s']:
+    for game in ['Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s']:
         if game not in queues:
             queues[game] = -1
     return queues
@@ -461,7 +461,7 @@ async def getTablesForManager():
             "SELECT tableId, gameSelected, status FROM tables;"
         )
     return {
-        row["tableId"]: {"game": row["gameSelected"], "status": row["status"]}
+        row["tableid"]: {"game": row["gameselected"], "status": row["status"]}
         for row in rows
     }
 
@@ -472,7 +472,7 @@ async def getTableDetails(tableId: str):
         queue = await conn.fetch(
             """SELECT u.username AS username
                FROM users u
-               JOIN queue q ON q.userId = u.id
+               JOIN queue q ON q.userid = u.id
                WHERE q.tableId = $1
                ORDER BY q.timeOfJoin ASC;""",
             tableId
@@ -525,7 +525,7 @@ async def getTableConfiguration(tableId: str):
         raise dbError(f"Table {tableId} not found")
     return {
         "game": configuration["game"],
-        "maxPlayers": configuration["maxPlayers"]
+        "maxPlayers": configuration["maxplayers"]
     }
 
 
