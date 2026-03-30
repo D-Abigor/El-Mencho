@@ -100,10 +100,12 @@ def _transactionstoDescriptive(transactionlogs: list[asyncpg.Record], uuid: _uui
         change = entry["change"]
         source = entry["source"]
         destination = entry["destination"]
+        destinationusername = entry["destinationusername"]
+        sourceusername = entry["sourceusername"]
         if source == uuid:
-            line = f"you sent {destination} {change}"
+            line = f"you sent {destinationusername} {changeusername}"
         elif destination == uuid:
-            line = f"{source} sent you {change}"
+            line = f"{sourceusername} sent you {changeusername}"
         cleanedLogs.append(line)
     return cleanedLogs
 
@@ -315,9 +317,9 @@ async def getPlayerHome(session_token: str):
         )
 
         transactions = await conn.fetch(
-            """SELECT change, source, destination
-               FROM transactions
-               WHERE source = $1 OR destination = $1
+            """SELECT t.change, u1.username as sourceusername, t.source as source, u2.username as destinationusername, t.destination as destination
+               FROM transactions t JOIN users u1 ON t.source = u1.id JOIN users u2 ON t.destination = u2.id
+               WHERE t.source = $1 OR t.destination = $1
                ORDER BY processed_at DESC;""",
             uuid
         )
