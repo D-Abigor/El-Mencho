@@ -668,12 +668,16 @@ async def startGame(tablenum: str):
 
 
 async def endGame(result: dict, tablenum: str):
-    print("entered endGame function")
-    # settle game — update balances, write logs, clear active players
+    print("=== entered endGame function ===")
+    print(f"tablenum: {tablenum}")
+    print(f"result dict received: {result}")
+
     async with conn_pool.acquire() as conn:
         try:
             async with conn.transaction():
 
+                # Step 1: Insert into gamesPlayed
+                print("Step 1: Inserting into gamesPlayed...")
                 row = await conn.fetchrow(
                     """INSERT INTO gamesPlayed (game, tableId)
                        SELECT gameSelected, tableId
@@ -682,9 +686,15 @@ async def endGame(result: dict, tablenum: str):
                        RETURNING gameId, game;""",
                     tablenum
                 )
-                game_id = row["gameid"]
-                print("gameid :", game_id)
+                print(f"fetchrow result: {row}")
+                if row is None:
+                    raise ValueError(f"No table found with tableId={tablenum}, INSERT returned nothing")
 
+                game_id = row["gameid"]
+                print(f"game_id: {game_id}")
+
+                # Step 2: Fetch active players
+                print("Step 2: Fetching active players...")
                 players = await conn.fetch(
                     """SELECT u.username, u.id, ap.betAmount
                        FROM activePlayers ap
@@ -692,39 +702,68 @@ async def endGame(result: dict, tablenum: str):
                        WHERE ap.tableId = $1;""",
                     tablenum
                 )
-                print("players:", players)
+                print(f"players fetched ({len(players)}): {[dict(p) for p in players]}")
 
+                if not players:
+                    raise ValueError(f"No active players found for tableId={tablenum}, aborting endGame")
+
+                # Step 3: Build update/log lists
+                print("Step 3: Building balance_updates and logs...")
                 balance_updates = []
                 logs = []
-
                 for p in players:
-                    final_amount = result[p["username"]]
-                    initial = p["betAmount"]
-                    change = final_amount - initial
-                    balance_updates.append((change, p["id"]))
-                    logs.append((game_id, p["id"], initial, final_amount))
+                    username = p["username"]
+                    user_id = p["id"]
+                    initial = p["betamount"]  # asyncpg lowercases column names
 
+                    if username not in result:
+                        raise KeyError(f"Player '{username}' not found in result dict. result keys: {list(result.keys())}")
+
+                    final_amount = result[username]
+                    change = final_amount - initial
+                    print(f"  {username}: initial={initial}, final={final_amount}, change={change}")
+                    balance_updates.append((change, user_id))
+                    logs.append((game_id, user_id, initial, final_amount))
+
+                print(f"balance_updates: {balance_updates}")
+                print(f"logs: {logs}")
+
+                # Step 4: Update account balances
+                print("Step 4: Running executemany on accounts...")
                 await conn.executemany(
                     """UPDATE accounts
                        SET balance = balance + $1
                        WHERE user_id = $2;""",
                     balance_updates
                 )
+                print("Step 4 done.")
 
+                # Step 5: Insert game player logs
+                print("Step 5: Inserting gamePlayerLogs...")
                 await conn.executemany(
                     """INSERT INTO gamePlayerLogs (gameId, userId, initialBet, finalAmount)
                        VALUES ($1, $2, $3, $4);""",
                     logs
                 )
+                print("Step 5 done.")
 
+                # Step 6: Delete active players
+                print("Step 6: Deleting activePlayers...")
                 await conn.execute(
                     "DELETE FROM activePlayers WHERE tableId = $1;", tablenum
                 )
+                print("Step 6 done.")
 
+                # Step 7: Reset table status
+                print("Step 7: Updating table status to 'waiting'...")
                 await conn.execute(
                     "UPDATE tables SET status = 'waiting' WHERE tableId = $1;", tablenum
                 )
+                print("Step 7 done.")
 
         except Exception as e:
-            raise dbError(str(e))
+            print(f"!!! Exception in endGame: {type(e).__name__}: {e}")
+            raise dbError(str(e)) from e
+
+    print("=== endGame completed successfully ===")
     return {"status": "ok"}
