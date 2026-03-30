@@ -81,8 +81,6 @@ async def validate_request(request: Request, call_next):
                 {"request": request, "message": "Invalid or expired session"},
                 status_code=401
             )
-        else:
-            access = 'player'
 
     elif path == "/tables" or path.startswith("/table/"):
         status = await db.validate(session_token=session_token, role="manager")
@@ -92,11 +90,8 @@ async def validate_request(request: Request, call_next):
                 {"request": request, "message": "Invalid or expired session"},
                 status_code=401
             )
-        else:
-            access = 'manager'
 
     request.state.session_token = session_token
-    request.state.access = access
     response = await call_next(request)
     return response
 
