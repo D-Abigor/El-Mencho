@@ -169,6 +169,7 @@ async def getPayees(session_token: str):
 
 async def getSessionToken(username: str, password: str):
     # input length guard — bcrypt silently truncates at 72 bytes
+    print("inside getsEssiontoken")
     if len(password.encode()) > 72:
         raise authenticationFailure("Password too long")
 
@@ -176,8 +177,10 @@ async def getSessionToken(username: str, password: str):
         row = await conn.fetchrow(
             "SELECT id, password_hash FROM users WHERE username = $1;", username
         )
+        
 
         if row:
+            print("row for user from users detected")
             valid = await asyncio.to_thread(
                 bcrypt.verify, password, str(row["password_hash"])
             )
@@ -199,8 +202,10 @@ async def getSessionToken(username: str, password: str):
                 )
                 return new_session["session_token"]
             else:
+                print("invalid credentials")
                 raise authenticationFailure("Invalid credentials")
         else:
+            print("user does not exist")
             raise dbError("Internal db error - user does not exist")
 
 
