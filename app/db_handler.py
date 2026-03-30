@@ -757,7 +757,7 @@ async def endGame(result: dict, tablenum: str):
                 # Step 7: Reset table status
                 print("Step 7: Updating table status to 'waiting'...")
                 await conn.execute(
-                    "UPDATE tables SET status = 'waiting' WHERE tableId = $1;", tablenum
+                    "UPDATE tables SET status = 'idle' WHERE tableId = $1;", tablenum
                 )
                 print("Step 7 done.")
 
