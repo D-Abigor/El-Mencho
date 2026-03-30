@@ -47,7 +47,7 @@ async def _uuidFromSession(session_token: str) -> str:
         )
         if not row:
             raise dbError("Internal db error - could not get corresponding uuid")
-        return row["user_id"]
+        return str(row["user_id"])
 
 
 async def _getUsernameFromUuid(uuid: str) -> str:
