@@ -607,7 +607,7 @@ async def getTableDetails(tableId: str):
         )
         activePlayers = await conn.fetch(
             """
-            SELECT u.username AS username a.betAmount AS bet 
+            SELECT u.username AS username, a.betAmount AS bet 
             FROM users u JOIN activePlayers a ON a.user_id = u.id WHERE tableId = $1;
             """, tableId
         )
