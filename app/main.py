@@ -199,6 +199,7 @@ async def getqueue(request: Request):
 async def checkParticipation(request: Request):
     session_token = request.state.session_token
     queueStatus = await db.getParticipation(session_token)
+    print("gameconfirm response:", queueStatus)
     return JSONResponse(queueStatus)
 
 #------------------------ POST endpoints — Player ----------------------#
