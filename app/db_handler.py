@@ -517,17 +517,20 @@ async def confirmPlayers(tablenum: str):
     async with conn_pool.acquire() as conn:
         await conn.execute(
             """UPDATE queue q
-               SET readyToJoin = TRUE
-               WHERE q.number IN (
-                   SELECT q2.number
-                   FROM queue q2
-                   JOIN tables t ON q2.tableId = t.tableId
-                   WHERE q2.tableId = $1
-                     AND q2.readyToJoin = FALSE
-                   ORDER BY q2.timeOfJoin ASC
-                   LIMIT t.max_players
-               );""",
-            tablenum
+                SET readyToJoin = TRUE
+                WHERE q.number IN (
+                    SELECT q2.number
+                    FROM (
+                    SELECT q2.number,
+                        ROW_NUMBER() OVER (ORDER BY q2.timeOfJoin ASC) as rn,
+                        t.max_players
+                    FROM queue q2
+                    JOIN tables t ON q2.tableId = t.tableId
+                    WHERE q2.tableId = $1
+                        AND q2.readyToJoin = FALSE
+                    )sub
+                    WHERE rn <= max_players
+                    );""",tablenum
         )
 
 
