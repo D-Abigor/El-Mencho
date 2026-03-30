@@ -614,6 +614,33 @@ async def getTableDetails(tableId: str):
     }
 
 
+async def getQueueAndActivePlayers(tableId):
+    async with conn_pool.acquire() as conn:
+        players_rows = await conn.fetch(
+        """
+        SELECT u.username, a.betamount
+        FROM activeplayers a
+        JOIN users u ON u.id = a.userid
+        WHERE a.tableid = $1
+        """,
+        table_id
+        )
+
+        queue_rows = await conn.fetch(
+        """
+        SELECT q.number, u.username
+        FROM queue q
+        JOIN users u ON u.id = q.userid
+        WHERE q.tableid = $1
+        ORDER BY q.number ASC
+        """,
+        table_id
+        )
+    return {
+        "players": { row["username"]: row["betamount"] for row in players_rows },
+        "queue":   { str(row["number"]): row["username"] for row in queue_rows }
+    }
+
 #------------- Functions serving manager POST endpoints -------------#
 
 async def setTableConfiguration(tablename: str, game: str, maxPlayers: int):

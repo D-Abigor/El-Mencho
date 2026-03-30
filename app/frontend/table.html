@@ -86,7 +86,6 @@
       padding: 20px 0;
     }
 
-    /* End game modal */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -145,13 +144,6 @@
     .result-input { flex: 1; }
 
     .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
-
-    #refreshTimer {
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      letter-spacing: 0.15em;
-      color: var(--muted);
-    }
   </style>
 </head>
 <body>
@@ -170,7 +162,6 @@
         <p class="page-subtitle">Live queue and active players</p>
       </div>
       <div class="header-actions">
-        <span id="refreshTimer"></span>
         <button class="btn btn-outline btn-sm" onclick="pullPlayers()">Pull Players</button>
         <button class="btn btn-outline btn-sm" onclick="configureTable()">Configure</button>
         <button class="btn btn-outline btn-sm" onclick="startGame()">Start Game</button>
@@ -180,7 +171,6 @@
     </div>
 
     <div class="two-col animate-in stagger-2">
-      <!-- Queue -->
       <div class="card">
         <div class="section-head">
           <span>♠ Queue</span>
@@ -191,7 +181,6 @@
         </div>
       </div>
 
-      <!-- Active Players -->
       <div class="card">
         <div class="section-head">
           <span>♦ Active Players</span>
@@ -203,7 +192,7 @@
       </div>
     </div>
 
-    <div style="margin-top:24px; animate-in stagger-3">
+    <div style="margin-top:24px;">
       <a href="/tables" class="btn btn-outline btn-sm">← All Tables</a>
     </div>
   </div>
@@ -227,27 +216,6 @@
 
     let activePlayers = {};
 
-    async function loadTableData() {
-      try {
-        const res = await fetch(`/table/${tableId}`);
-        // Parse the page's data via a dedicated JSON endpoint equivalent
-        // Since this is a template page, we re-use the queue endpoint
-        await refreshData();
-      } catch(e) {}
-    }
-
-    async function refreshData() {
-      try {
-        const res = await fetch(`/table/${tableId}`, {
-          headers: { 'Accept': 'application/json' }
-        });
-        // The endpoint returns HTML; data is embedded at page load
-        // For live updates we rely on the data rendered server-side on load
-        // and re-fetch every 8s by reloading the data section via JSON endpoint
-      } catch(e) {}
-    }
-
-    // Render queue from server-rendered data
     const serverQueue   = {{ details.queue | tojson }};
     const serverPlayers = {{ details.players | tojson }};
 
@@ -292,6 +260,20 @@
 
     renderQueue(serverQueue);
     renderPlayers(serverPlayers);
+
+    async function softRefresh() {
+      try {
+        const res = await fetch(`/table/${tableId}/data`);
+        if (!res.ok) return;
+        const data = await res.json();
+        renderQueue(data.queue);
+        renderPlayers(data.players);
+      } catch (e) {
+        // skip silently
+      }
+    }
+
+    setInterval(softRefresh, 8000);
 
     async function pullPlayers() {
       await fetch(`/table/${tableId}/pull`);
@@ -359,15 +341,6 @@
         location.reload();
       }
     }
-
-    // Auto-refresh every 8 seconds
-    let countdown = 8;
-    const timer = document.getElementById('refreshTimer');
-    setInterval(() => {
-      countdown--;
-      timer.textContent = `Refreshing in ${countdown}s`;
-      if (countdown <= 0) { countdown = 8; location.reload(); }
-    }, 1000);
   </script>
 </body>
 </html>
