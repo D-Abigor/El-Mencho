@@ -329,6 +329,7 @@ async def getPlayerHome(session_token: str):
     }
 
 async def getUserQueue(session_token: str):
+    print("entered getUserQueue")
     uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         activeQueues = await conn.fetch(
