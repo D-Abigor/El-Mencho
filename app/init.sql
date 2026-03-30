@@ -31,18 +31,26 @@ CREATE TABLE transactions(
 
 CREATE TABLE tables(                                        -- FIX: added semicolons throughout
     tableid INT PRIMARY KEY,
-    gameselected TEXT CHECK (gameselected IN ('teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s','')),
-    status TEXT CHECK (status IN ('waiting','active')),
+    gameSelected TEXT CHECK (gameSelected IN ('Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s')),
+    status TEXT CHECK (status IN ('idle', 'ready','running', 'ended')),
     max_players INT
 );
 
-INSERT INTO tables(tableid, gameselected, status, max_players) VALUES  -- FIX: single quotes
-    (1, '', 'waiting', 6),
-    (2, '', 'waiting', 6),
-    (3, '', 'waiting', 6),
-    (4, '', 'waiting', 6),
-    (5, '', 'waiting', 6),
-    (6, '', 'waiting', 6);
+
+INSERT INTO tables (tableId, gameSelected, status, max_players) VALUES
+(1,'Teen Patti','idle',6),
+(2,'Poker','idle',6),
+(3,'3 of spades','idle',6),
+(4,'Blackjack','idle',6),
+(5,'Rummy','idle',6),
+(6,'Crazy 8s','idle',6);
+
+INSERT INTO users(username,password_hash,isleader,affiliation,access) VALUES
+    ('ivin', '$2b$12$hZ7XXU1Nj7iziT47/qetVu.Z6wbbyZQYRo8bQL70hpESE1m8Rhc6q', TRUE, 'random', 'player'),
+    ('kavish', '$2b$12$hZ7XXU1Nj7iziT47/qetVu.Z6wbbyZQYRo8bQL70hpESE1m8Rhc6q', TRUE, 'random', 'player'),
+    ('joseph', '$2b$12$hZ7XXU1Nj7iziT47/qetVu.Z6wbbyZQYRo8bQL70hpESE1m8Rhc6q', TRUE, 'random', 'player'),
+    ('tom', '$2b$12$hZ7XXU1Nj7iziT47/qetVu.Z6wbbyZQYRo8bQL70hpESE1m8Rhc6q', TRUE, 'manager', 'manager');
+
 
 CREATE TABLE activeplayers(
     userid uuid PRIMARY KEY,
@@ -82,3 +90,5 @@ CREATE TABLE gameplayerlogs(
     CONSTRAINT gameplayerlogs_userid_fkey FOREIGN KEY (userid) REFERENCES users(id)
     -- FIX: removed bogus FK on timeoffinish — timestamps can't reference another table
 );
+
+
