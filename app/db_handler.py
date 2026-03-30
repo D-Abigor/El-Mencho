@@ -324,8 +324,8 @@ async def getPlayerHome(session_token: str):
 
     return {
         "teamname": userAndTeam["teamname"],
-        "usercredits": userAndTeam["userCredits"],
-        "teamcredits": userAndTeam["teamCredits"],
+        "usercredits": userAndTeam["usercredits"],
+        "teamcredits": userAndTeam["teamcredits"],
         "transactions": _transactionstoDescriptive(transactions, uuid),
         "gamelogs": _gameLogstoDescriptive(gameLogs)
     }
