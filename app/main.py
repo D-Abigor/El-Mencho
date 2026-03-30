@@ -201,7 +201,6 @@ async def checkParticipation(request: Request):
     queueStatus = await db.getParticipation(session_token)
     return JSONResponse(queueStatus)
 
-
 #------------------------ POST endpoints — Player ----------------------#
 
 @app.post("/login")

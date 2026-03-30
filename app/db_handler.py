@@ -369,8 +369,10 @@ async def insertIntoQueue(session_token: str, tablenum: str):
     async with conn_pool.acquire() as conn:
         status = await conn.fetchrow("""SELECT FROM queue WHERE userid = $1 AND tableid = $2""", userId, tablenum)
         if status:
+            print("detected as already in queue")
             return {"status": "already in queue"}
         else:
+            print("not in queue")
             await conn.execute("""INSERT INTO queue (tableId, userId) VALUES ($1, $2);""",
             tablenum, userId
         )
@@ -471,7 +473,7 @@ async def getTablesForManager():
     }
 
 
-async def getTableDetails(tableId: str):
+async def getManagerHome(tableId: str):
     # return queue data and players currently playing with bets
     async with conn_pool.acquire() as conn:
         queue = await conn.fetch(
@@ -496,8 +498,6 @@ async def getTableDetails(tableId: str):
     }
 
 
-async def getManagerHome(tablenum: str):
-    return await getTableDetails(tablenum)
 
 
 async def confirmPlayers(tablenum: str):
@@ -601,7 +601,6 @@ async def setTableConfiguration(tablename: str, game: str, maxPlayers: int):
         return {"status": "ok"}
     else:
         return {"status": "fail"}
-
 
 async def startGame(tablenum: str):
     async with conn_pool.acquire() as conn:
