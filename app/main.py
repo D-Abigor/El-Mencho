@@ -54,6 +54,9 @@ class removeFromQueueDetails(BaseModel):
 class tableNum(BaseModel):
     tableId: str
 
+class enterQueue(BaseModel):
+    tablenum: str
+
 
 #------------------ Internal helper ---------------------------#
 
@@ -237,6 +240,11 @@ async def confirmParticipation(request: Request, participation: participationCon
         betAmount=participation.betAmount
     )
     return RedirectResponse(url="/play", status_code=303)
+
+@app.post("/play")
+async def addtoQueue(request: Request, tablenum: enterQueue):
+    session_token = request.state.session_token
+    await db.insertIntoQueue(session_token, tablenum)
 
 
 #--------------------- GET endpoints — Manager -----------------#
