@@ -599,7 +599,7 @@ async def getTableDetails(tableId: str):
     async with conn_pool.acquire() as conn:
         queue = conn.fetch(
             """SELECT u.username AS username FROM users u JOIN queue q 
-            ON q.userId = u.id WHERE tableId = $1 ORDER BY q.timeOfJoin ASC;""", tablenum
+            ON q.userId = u.id WHERE tableId = $1 ORDER BY q.timeOfJoin ASC;""", tableId
         )
         activePlayers = conn.fetch(
             """
