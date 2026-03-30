@@ -64,17 +64,6 @@ def _redirect_login():
 #------------------------ Middleware ----------------------------#
 
 protected = ["/home", "/pay", "/payees", "/play", "/transfer", "/queue", "/gameConfirm"]
-managerEndpoints = [
-    "/tables",
-    "/table/{tableId}",
-    "/table/{tableId}/pull",
-    "/table/{tableId}/configure",
-    "/table/{tableId}/flush",
-    "/table/{tableId}/config",
-    "/table/{tableId}/end",
-    "/table/{tableId}/remove",
-    "/table/{tableId}/queue",
-]
 
 @app.middleware("http")
 async def validate_request(request: Request, call_next):
@@ -90,7 +79,9 @@ async def validate_request(request: Request, call_next):
                 status_code=401
             )
 
-    elif path.startswith("/table/"):
+    elif path == "/tables" or path.startswith("/table/"):
+        # FIX: /tables (manager overview) was not covered by path.startswith("/table/")
+        # FIX: /table/{tableId}/start was missing from the old managerEndpoints list
         status = await db.validate(session_token=session_token, role="manager")
         if not status:
             return pages.TemplateResponse(
@@ -223,9 +214,12 @@ async def login_post(creds: login, request: Request):
 @app.post("/transfer")
 async def transfer_post(details: transferDetail, request: Request):
     session_token = request.state.session_token
-    message = await db.transfer(session_token, details.recepient, details.amount)
+    await db.transfer(session_token, details.recepient, details.amount)
+    # FIX: db.transfer returns True (bool) on success, not a message string.
+    # Substituting a fixed success message here instead of passing the bool to the template.
     return pages.TemplateResponse(
-        "successful_transaction.html", {"request": request, "message": message}
+        "successful_transaction.html",
+        {"request": request, "message": f"Successfully transferred {details.amount} credits to {details.recepient}."}
     )
 
 @app.post("/gameConfirm")
@@ -300,5 +294,7 @@ async def startGame(request: Request, tableId: str):
 
 @app.post("/table/{tableId}/end")
 async def endGame(request: Request, tableId: str, result: gameResults):
-    status = await db.endGame(tablenum=result.tablenum, result=result.results)
+    # FIX: use tableId from the URL as the authoritative table identifier,
+    # not result.tablenum from the request body which could disagree with the URL.
+    status = await db.endGame(result=result.results, tablenum=tableId)
     return JSONResponse(status)
