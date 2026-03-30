@@ -216,12 +216,16 @@
 
     let activePlayers = {};
 
+    // Jinja injects the same dict shapes that /data also returns:
+    // queue  -> { 1: "username", 2: "username", ... }  (integer keys from _convertQueue)
+    // players -> { "username": betAmount, ... }         (from _convertActivePlayers)
     const serverQueue   = {{ details.queue | tojson }};
     const serverPlayers = {{ details.players | tojson }};
 
     function renderQueue(queue) {
       const list = document.getElementById('queueList');
-      const keys = Object.keys(queue);
+      // Object.keys always returns strings, so keys will be "1", "2" etc.
+      const keys = Object.keys(queue).sort((a, b) => Number(a) - Number(b));
       document.getElementById('queueCount').textContent = `${keys.length} waiting`;
       if (keys.length === 0) {
         list.innerHTML = '<p class="empty-state">Queue is empty</p>';
@@ -258,9 +262,12 @@
       `).join('');
     }
 
+    // Initial render from server-injected data
     renderQueue(serverQueue);
     renderPlayers(serverPlayers);
 
+    // Soft refresh — hits the same db function as the template route,
+    // returns identical { queue, players } shape, updates only these two sections
     async function softRefresh() {
       try {
         const res = await fetch(`/table/${tableId}/data`);
@@ -269,7 +276,7 @@
         renderQueue(data.queue);
         renderPlayers(data.players);
       } catch (e) {
-        // skip silently
+        // network error — skip silently, retry next interval
       }
     }
 

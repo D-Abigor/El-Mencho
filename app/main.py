@@ -293,9 +293,9 @@ async def removeFromQueue(request: Request, tableId: str, removePlayer: str = No
 
 #endpoint serving queue and active players for tableId
 @app.get("/table/{tableId}/data")
-async def removeFromQueue(request: Request, tableId: str, removePlayer: str = None):
-    details = await db.getQueueAndActivePlayers(tableId)
-    response = JSONResponse(details)
+async def getTableDetails(request: Request, tableId: str):
+    details = await db.getTableDetails(tableId=tableId)
+    return JSONResponse(details)
 
 
 #-------------------- POST endpoints — Manager -----------------#
