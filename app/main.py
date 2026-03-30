@@ -244,7 +244,8 @@ async def confirmParticipation(request: Request, participation: participationCon
 @app.post("/play")
 async def addtoQueue(request: Request, tablenum: enterQueue):
     session_token = request.state.session_token
-    await db.insertIntoQueue(session_token, tablenum.tablenum)
+    print("recieved player insert into queue post with details:", tablenum)
+    status = await db.insertIntoQueue(session_token, tablenum.tablenum)
 
 
 #--------------------- GET endpoints — Manager -----------------#

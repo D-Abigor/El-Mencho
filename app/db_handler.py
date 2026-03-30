@@ -368,6 +368,7 @@ async def insertIntoQueue(session_token: str, tablenum: str):
     userId = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         status = await conn.fetchrow("""SELECT FROM queue WHERE userid = $1 AND tableid = $2""", userId, tablenum)
+        print("row from checking if user in queue")
         if status:
             print("detected as already in queue")
             return {"status": "already in queue"}
