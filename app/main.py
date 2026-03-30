@@ -228,8 +228,6 @@ async def login_post(creds: login, request: Request):
 async def transfer_post(details: transferDetail, request: Request):
     session_token = request.state.session_token
     await db.transfer(session_token, details.recepient, details.amount)
-    # FIX: db.transfer returns True (bool) on success, not a message string.
-    # Substituting a fixed success message here instead of passing the bool to the template.
     return pages.TemplateResponse(
         "successful_transaction.html",
         {"request": request, "message": f"Successfully transferred {details.amount} credits to {details.recepient}."}
@@ -320,9 +318,5 @@ async def startGame(request: Request, tableId: str):
 
 @app.post("/table/{tableId}/end")
 async def endGame(request: Request, tableId: str, result: gameResults):
-    # FIX: use tableId from the URL as the authoritative table identifier,
-    # not result.tablenum from the request body which could disagree with the URL
-    print("inside post endpoint /end")
     status = await db.endGame(result=result.results, tablenum=tableId)
-    print("status of /end", status)
     return JSONResponse(status)

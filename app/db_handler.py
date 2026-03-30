@@ -172,7 +172,6 @@ async def getPayees(session_token: str):
 
 async def getSessionToken(username: str, password: str):
     # input length guard — bcrypt silently truncates at 72 bytes
-    print("inside getsEssiontoken")
     if len(password.encode()) > 72:
         raise authenticationFailure("Password too long")
 
@@ -183,19 +182,16 @@ async def getSessionToken(username: str, password: str):
         
 
         if row:
-            print("row for user from users detected")
             valid = await asyncio.to_thread(
                 bcrypt.verify, password, str(row["password_hash"])
             )
             if valid:
-                print("valid credentials detected")
                 existing = await conn.fetchrow(
                     """SELECT session_token FROM sessions
                        WHERE user_id = $1 AND expires_at > NOW();""",
                     row["id"],
                 )
                 if existing:
-                    print("detected that session token exists")
                     return existing["session_token"]
                 new_session = await conn.fetchrow(
                     """INSERT INTO sessions (user_id, expires_at)
@@ -205,10 +201,8 @@ async def getSessionToken(username: str, password: str):
                 )
                 return new_session["session_token"]
             else:
-                print("invalid credentials")
                 raise authenticationFailure("Invalid credentials")
         else:
-            print("user does not exist")
             raise dbError("Internal db error - user does not exist")
 
 
@@ -339,7 +333,6 @@ async def getPlayerHome(session_token: str):
     }
 
 async def getUserQueue(session_token: str):
-    print("entered getUserQueue")
     uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         activeQueues = await conn.fetch(
@@ -361,7 +354,6 @@ async def getUserQueue(session_token: str):
             WHERE userId = $1
             ) uq ON uq.tableId = t.tableId;""",uuid
         )
-        [print(dict(row)) for row in activeQueues]
     return _cleanUserQueue(activeQueues)
 
 
@@ -380,19 +372,15 @@ async def getLeaderBoard():
 #------------- Functions serving player game endpoints --------------#
 
 async def insertIntoQueue(session_token: str, tablenum: str):
-    print("insert into queue function trigged")
     userId = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         status = await conn.fetchrow("""SELECT tableid FROM queue WHERE userid = $1 AND tableid = $2
                                         UNION
                                         SELECT tableid FROM activePlayers WHERE userid = $1 AND tableid = $2;""", 
                                         userId, tablenum)
-        print("row from checking if user in queue with arguments ", userId, tablenum)
         if status:
-            print("detected as already in queue")
             return {"status": "already in queue"}
         else:
-            print("not in queue")
             await conn.execute("""INSERT INTO queue (tableId, userId) VALUES ($1, $2);""",
             tablenum, userId
         )
@@ -435,7 +423,6 @@ async def confirmParticipation(session_token: str, tablenum: str, confirmation: 
                     uuid, tablenum
                 )
         else:
-            print("player declined, removing from queue")
             async with conn.transaction():
                 await conn.execute(
                     "DELETE FROM queue WHERE userId = $1 AND tableId = $2;",
@@ -673,16 +660,12 @@ async def startGame(tablenum: str):
 
 
 async def endGame(result: dict, tablenum: str):
-    print("=== entered endGame function ===")
-    print(f"tablenum: {tablenum}")
-    print(f"result dict received: {result}")
 
     async with conn_pool.acquire() as conn:
         try:
             async with conn.transaction():
 
                 # Step 1: Insert into gamesPlayed
-                print("Step 1: Inserting into gamesPlayed...")
                 row = await conn.fetchrow(
                     """INSERT INTO gamesPlayed (game, tableId)
                        SELECT gameSelected, tableId
@@ -691,15 +674,10 @@ async def endGame(result: dict, tablenum: str):
                        RETURNING gameId, game;""",
                     tablenum
                 )
-                print(f"fetchrow result: {row}")
                 if row is None:
                     raise ValueError(f"No table found with tableId={tablenum}, INSERT returned nothing")
 
                 game_id = row["gameid"]
-                print(f"game_id: {game_id}")
-
-                # Step 2: Fetch active players
-                print("Step 2: Fetching active players...")
                 players = await conn.fetch(
                     """SELECT u.username, u.id, ap.betAmount
                        FROM activePlayers ap
@@ -707,13 +685,11 @@ async def endGame(result: dict, tablenum: str):
                        WHERE ap.tableId = $1;""",
                     tablenum
                 )
-                print(f"players fetched ({len(players)}): {[dict(p) for p in players]}")
 
                 if not players:
                     raise ValueError(f"No active players found for tableId={tablenum}, aborting endGame")
 
                 # Step 3: Build update/log lists
-                print("Step 3: Building balance_updates and logs...")
                 balance_updates = []
                 logs = []
                 for p in players:
@@ -726,49 +702,34 @@ async def endGame(result: dict, tablenum: str):
 
                     final_amount = result[username]
                     change = final_amount - initial
-                    print(f"  {username}: initial={initial}, final={final_amount}, change={change}")
                     balance_updates.append((change, user_id))
                     logs.append((game_id, user_id, initial, final_amount))
 
-                print(f"balance_updates: {balance_updates}")
-                print(f"logs: {logs}")
-
                 # Step 4: Update account balances
-                print("Step 4: Running executemany on accounts...")
                 await conn.executemany(
                     """UPDATE accounts
                        SET balance = balance + $1
                        WHERE user_id = $2;""",
                     balance_updates
                 )
-                print("Step 4 done.")
 
                 # Step 5: Insert game player logs
-                print("Step 5: Inserting gamePlayerLogs...")
                 await conn.executemany(
                     """INSERT INTO gamePlayerLogs (gameId, userId, initialBet, finalAmount)
                        VALUES ($1, $2, $3, $4);""",
                     logs
                 )
-                print("Step 5 done.")
 
                 # Step 6: Delete active players
-                print("Step 6: Deleting activePlayers...")
                 await conn.execute(
                     "DELETE FROM activePlayers WHERE tableId = $1;", tablenum
                 )
-                print("Step 6 done.")
 
                 # Step 7: Reset table status
-                print("Step 7: Updating table status to 'waiting'...")
                 await conn.execute(
                     "UPDATE tables SET status = 'idle' WHERE tableId = $1;", tablenum
                 )
-                print("Step 7 done.")
 
         except Exception as e:
-            print(f"!!! Exception in endGame: {type(e).__name__}: {e}")
             raise dbError(str(e)) from e
-
-    print("=== endGame completed successfully ===")
     return {"status": "ok"}
