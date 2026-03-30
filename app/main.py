@@ -250,10 +250,6 @@ async def transfer_post(details: transferDetail, request: Request):
       "successful_transaction.html", {"request": request, "message": message}
   )
 
-
-@app.post("/game") # post that decides how much to bet
-async def play_post(details: game, response: Response):
-
 #-----------------GET FOR MANAGERS -----------------#
 
 @app.get("/tables")
