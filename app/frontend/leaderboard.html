@@ -61,7 +61,13 @@
         <th>Team</th>
         <th>Credits</th>
       </tr>
-      {% for i, entry in enumerate(leaderboard, start=1) %}
+      {% for entry in leaderboard %}
+        <tr>
+        <td class="rank">{{ loop.index }}</td>  {# 1-based rank #}
+        <td>{{ entry.teamname }}</td>
+        <td class="credits">{{ "{:,}".format(entry.totalCredits) }}</td>
+        </tr>
+        {% endfor %}
       <tr>
         <td class="rank">{{ i }}</td>
         <td>{{ entry.teamname }}</td>
