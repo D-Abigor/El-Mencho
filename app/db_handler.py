@@ -219,7 +219,7 @@ async def deleteSessionToken(session_token: str):
 
 async def getAccess(session_token: str):
     async with conn_pool.acquire() as conn:
-        row = conn.fetchrow("""SELECT u.access AS access FROM users u JOIN sessions s ON u.id = s.user_id WHERE s.session_token = $1;""", session_token)
+        row = await conn.fetchrow("""SELECT u.access AS access FROM users u JOIN sessions s ON u.id = s.user_id WHERE s.session_token = $1;""", session_token)
         return row["access"]
 
 async def transfer(session_id: str, destination_username: str, amount):
@@ -363,6 +363,7 @@ async def getLeaderBoard():
             """SELECT u.affiliation AS teamname, SUM(a.balance) AS totalCredits
                FROM users u
                JOIN accounts a ON u.id = a.user_id
+               WHERE access = 'player'
                GROUP BY u.affiliation
                ORDER BY totalCredits DESC;"""
         )

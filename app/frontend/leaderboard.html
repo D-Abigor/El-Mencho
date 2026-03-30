@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Casino Leaderboard</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background: #0b0b0b;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 50px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 600px;
+    background: #1c1c1c;
+    box-shadow: 0 0 20px #ffd700; /* gold glow */
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 12px 20px;
+    text-align: left;
+  }
+  th {
+    background: #222;
+    color: #ffd700; /* gold headers */
+    font-size: 1.1em;
+  }
+  tr:nth-child(even) {
+    background: #2a2a2a;
+  }
+  tr:hover {
+    background: #333;
+    cursor: pointer;
+  }
+  .rank {
+    font-weight: bold;
+    color: #00a86b; /* emerald green */
+  }
+  .credits {
+    color: #ffd700; /* gold */
+    font-weight: bold;
+  }
+  h1 {
+    text-align: center;
+    color: #ffd700;
+    margin-bottom: 20px;
+    text-shadow: 0 0 5px #00a86b; /* subtle emerald glow */
+  }
+</style>
+</head>
+<body>
+  <div>
+    <h1>Casino Leaderboard</h1>
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Team</th>
+        <th>Credits</th>
+      </tr>
+      {% for i, entry in enumerate(leaderboard, start=1) %}
+      <tr>
+        <td class="rank">{{ i }}</td>
+        <td>{{ entry.teamname }}</td>
+        <td class="credits">{{ "{:,}".format(entry.totalCredits) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</body>
+</html>

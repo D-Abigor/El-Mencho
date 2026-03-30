@@ -175,7 +175,6 @@ async def logout(request: Request):
 async def play(request: Request):
     session_token = request.state.session_token
     games_and_queue = await db.getUserQueue(session_token=session_token)
-    print(games_and_queue)
     return pages.TemplateResponse(
         "play.html",
         {
@@ -194,7 +193,6 @@ async def getqueue(request: Request):
 async def checkParticipation(request: Request):
     session_token = request.state.session_token
     queueStatus = await db.getParticipation(session_token)
-    print("gameconfirm response:", queueStatus)
     return JSONResponse(queueStatus)
 
 #------------------------ POST endpoints — Player ----------------------#
@@ -231,7 +229,6 @@ async def transfer_post(details: transferDetail, request: Request):
 @app.post("/gameConfirm")
 async def confirmParticipation(request: Request, participation: participationConfirm):
     session_token = request.state.session_token
-    print("entered gamecconfirm post")
     await db.confirmParticipation(
         session_token=session_token,
         tablenum=participation.tablenum,
@@ -243,7 +240,6 @@ async def confirmParticipation(request: Request, participation: participationCon
 @app.post("/play")
 async def addtoQueue(request: Request, tablenum: enterQueue):
     session_token = request.state.session_token
-    print("recieved player insert into queue post with details:", tablenum)
     status = await db.insertIntoQueue(session_token, tablenum.tablenum)
 
 
