@@ -164,43 +164,41 @@
     <div id="notifBar" class="notification-bar">
       ◆ &nbsp; You've been called to the table! Confirm your participation below.
     </div>
-
     <div class="games-grid" id="gamesGrid">
       {% set suits = ['♠','♥','♣','♦','♠','♥'] %}
-      {% set game_keys = ['teenPatti','poker','spadesOf3','blackjack','rummy','crazy8s'] %}
       {% set game_names = ['Teen Patti','Poker','3 of Spades','Blackjack','Rummy','Crazy 8s'] %}
+      {% for i in range(1,7) %}
+      {% set q = games_and_queue.get(i|string, {}) %}
+      {% set gamename = q.get('game', game_names[i-1]) %}
+      {% set pos = q.get('position', -1) %}
+      {% set length = q.get('length', 0) %}
 
-      {% for i in range(6) %}
-        {% set key = game_keys[i] %}
-        {% set pos = games_and_queue.get(key, -1) %}
-        <div class="game-card animate-in stagger-{{ i+1 }}" data-game="{{ key }}" data-tableid="{{ i+1 }}">
-          <span class="bg-suit">{{ suits[i] }}</span>
-          <p class="game-name">{{ game_names[i] }}</p>
+      <div class="game-card animate-in stagger-{{ i }}" data-game="{{ gamename }}" data-tableid="{{ i }}">
+        <span class="bg-suit">{{ suits[i-1] }}</span>
+        <p class="game-name">{{ gamename }}</p>
 
           <div class="queue-status">
-            {% if pos == -1 %}
-              <span class="queue-dot dot-muted"></span>
-              <span class="queue-pos not-queue">Not in queue</span>
+            % if pos == -1 %}
+            <span class="queue-dot dot-muted"></span>
+            <span class="queue-pos not-queue">Not in queue</span>
             {% else %}
-              <span class="queue-dot dot-gold"></span>
-              <span class="queue-pos in-queue">Queue position: #{{ pos }}</span>
+            <span class="queue-dot dot-gold"></span>
+            <span class="queue-pos in-queue">Queue position: #{{ pos }}</span>
             {% endif %}
+            <span class="queue-length"> / {{ length }} in queue</span>
           </div>
-
           <div class="game-actions">
-            {% if pos == -1 %}
-              <button class="btn btn-gold btn-sm" onclick="joinQueue('{{ i+1 }}', '{{ game_names[i] }}')">
-                Join Queue
-              </button>
-            {% else %}
-              <span class="badge badge-gold">In Queue</span>
-            {% endif %}
+          {% if pos == -1 %}
+          <button class="btn btn-gold btn-sm" onclick="joinQueue('{{ i }}', '{{ gamename }}')">
+            Join Queue
+          </button>
+          {% else %}
+          <span class="badge badge-gold">In Queue</span>
+          {% endif %}
           </div>
-        </div>
+      </div>
       {% endfor %}
-    </div>
   </div>
-
   <!-- Bet + confirm modal -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal">

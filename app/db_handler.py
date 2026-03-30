@@ -127,7 +127,7 @@ def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
 def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
     queues = {}
     for queue in activeQueue:
-        queues[queue["game"]] = queue["position"]
+        queues[queue["tableid"]] = {"game": queue["game"], "position": queue["position"], "length": queue["length"]}
     for game in ['Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s']:
         if game not in queues:
             queues[game] = -1
@@ -337,15 +337,17 @@ async def getUserQueue(session_token: str):
     uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         activeQueues = await conn.fetch(
-            """SELECT t.gameSelected AS game,
-                      ROW_NUMBER() OVER (
-                          PARTITION BY q.tableId ORDER BY q.timeOfJoin ASC
-                      ) AS position,
-                      q.readyToJoin AS readyToJoin
-               FROM queue q
-               JOIN tables t ON q.tableId = t.tableId
-               WHERE q.userId = $1;""",
-            uuid
+            """SELECT 
+                t.gameSelected AS game,
+                ROW_NUMBER() OVER (
+                    PARTITION BY q.tableId ORDER BY q.timeOfJoin ASC
+                ) AS position,
+                    q.readyToJoin AS readytojoin,
+                    t.tableId AS tableid,
+                    COUNT(*) OVER (PARTITION BY q.tableId) AS length
+            FROM queue q
+            JOIN tables t ON q.tableId = t.tableId
+            WHERE q.userId = $1;""",uuid
         )
     return _cleanUserQueue(activeQueues)
 
