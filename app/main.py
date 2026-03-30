@@ -68,6 +68,7 @@ protected = ["/home", "/pay", "/payees", "/play", "/transfer", "/queue", "/gameC
 @app.middleware("http")
 async def validate_request(request: Request, call_next):
     session_token = request.cookies.get("session_token")
+    print("Session token", session_token)
     path = request.url.path
 
     if path in protected:
