@@ -320,5 +320,5 @@ async def endGame(request: Request, tableId: str, result: gameResults):
     # not result.tablenum from the request body which could disagree with the URL
     print("inside post endpoint /end")
     status = await db.endGame(result=result.results, tablenum=tableId)
-    print("status of /end" status)
+    print("status of /end", status)
     return JSONResponse(status)
