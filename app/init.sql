@@ -30,7 +30,7 @@ CREATE TABLE transactions(
 );
 
 CREATE TABLE tables(                                        -- FIX: added semicolons throughout
-    tableid INT PRIMARY KEY,
+    tableId INT PRIMARY KEY,
     gameSelected TEXT CHECK (gameSelected IN ('Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s')),
     status TEXT CHECK (status IN ('idle', 'ready','running', 'ended')),
     max_players INT
