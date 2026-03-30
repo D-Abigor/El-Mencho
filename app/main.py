@@ -90,8 +90,7 @@ async def validate_request(request: Request, call_next):
         else:
             raise InvalidSession("Invalid or expired session")
 
-    elif any(path.startswith(p.split("{")[0].rstrip("/")) for p in managerEndpoints if "{" in p) \
-         or path in managerEndpoints:
+    elif path.startswith("/table/"):
         status = await db.validate(session_token=session_token, role="manager")
         if status:
             request.state.session_token = session_token
