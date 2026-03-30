@@ -112,6 +112,8 @@ def _transactionstoDescriptive(transactionlogs: list[asyncpg.Record], uuid: _uui
 
 def _convertQueue(queue: list[asyncpg.Record]):
     queueCleaned = {}
+    if not queue:
+        return {}
     for index, player in enumerate(queue, start=1):
         queueCleaned[index] = player["username"]
     return queueCleaned
@@ -119,6 +121,8 @@ def _convertQueue(queue: list[asyncpg.Record]):
 
 def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
     players = {}
+    if not activePlayers:
+        return {}
     for player in activePlayers:
         players[player["username"]] = player["bet"]
     return players
