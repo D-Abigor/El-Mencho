@@ -56,7 +56,7 @@ CREATE TABLE activePlayers(
 
 CREATE TABLE queue(
     number SERIAL PRIMARY KEY,
-    tableId INT NOT NULL,
+    tableId TEXT NOT NULL,
     userId uuid NOT NULL,
     timeOfJoin TIMESTAMP DEFAULT now(),
     readyToJoin BOOLEAN NOT NULL DEFAULT FALSE,
