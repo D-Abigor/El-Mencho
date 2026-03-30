@@ -459,14 +459,12 @@ async def getParticipation(session_token: str):
     uuid = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         rows = await conn.fetch(
-            """SELECT q.tableId, t.gameSelected AS game, q.readyToJoin, q.position
-               FROM (
-                   SELECT tableId, readyToJoin,
-                          ROW_NUMBER() OVER (PARTITION BY tableId ORDER BY timeOfJoin ASC) AS position
-                   FROM queue
-                   WHERE userId = $1
-               ) q
-               JOIN tables t ON q.tableId = t.tableId;""",
+            """SELECT q.tableId AS "tableId", q.readyToJoin AS "readyToJoin"
+                FROM (
+                    SELECT tableId, readyToJoin
+                    FROM queue
+                WHERE userId = $1
+                ) q""",
             uuid
         )
     return [dict(r) for r in rows]
