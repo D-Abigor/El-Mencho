@@ -165,7 +165,7 @@ async def getSessionToken(username: str, password: str):
 
         if row:
             valid = await asyncio.to_thread(
-                bcrypt.verify, password, row["password_hash"]
+                bcrypt.verify, password, str(row["password_hash"])
             )
             if valid:
                 existing = await conn.fetchrow(
