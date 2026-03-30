@@ -318,7 +318,7 @@ async def startGame(request: Request, tableId: str):
 async def endGame(request: Request, tableId: str, result: gameResults):
     # FIX: use tableId from the URL as the authoritative table identifier,
     # not result.tablenum from the request body which could disagree with the URL
-    print("inside post endpoint /end").
+    print("inside post endpoint /end")
     status = await db.endGame(result=result.results, tablenum=tableId)
     print("status of /end" status)
     return JSONResponse(status)
