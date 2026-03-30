@@ -529,8 +529,7 @@ async def confirmPlayers(tablenum: str):
                     WHERE q2.tableId = $1
                     AND q2.readyToJoin = FALSE
                     ) sub
-                    WHERE sub.rn <= sub.max_players)
-                    );""",tablenum
+                    WHERE sub.rn <= sub.max_players);""",tablenum
         )
 
 
