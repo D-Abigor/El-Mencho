@@ -72,6 +72,7 @@ async def validate_request(request: Request, call_next):
     path = request.url.path
 
     if path in protected:
+        print("path detected as protected")
         status = await db.validate(session_token=session_token, role="player")
         if not status:
             return pages.TemplateResponse(
@@ -81,6 +82,7 @@ async def validate_request(request: Request, call_next):
             )
 
     elif path == "/tables" or path.startswith("/table/"):
+        print("path detected as manager level")
         # FIX: /tables (manager overview) was not covered by path.startswith("/table/")
         # FIX: /table/{tableId}/start was missing from the old managerEndpoints list
         status = await db.validate(session_token=session_token, role="manager")
