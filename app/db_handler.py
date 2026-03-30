@@ -357,7 +357,7 @@ async def getLeaderBoard():
                GROUP BY u.affiliation
                ORDER BY totalCredits DESC;"""
         )
-    return [{"teamname": r["teamname"], "totalCredits": r["totalCredits"]} for r in rows]
+    return [{"teamname": r["teamname"], "totalCredits": r["totalcredits"]} for r in rows]
 
 
 #------------- Functions serving player game endpoints --------------#
@@ -622,7 +622,7 @@ async def endGame(result: dict, tablenum: str):
                        RETURNING gameId, game;""",
                     tablenum
                 )
-                game_id = row["gameId"]
+                game_id = row["gameid"]
 
                 players = await conn.fetch(
                     """SELECT u.username, u.id, ap.betAmount
