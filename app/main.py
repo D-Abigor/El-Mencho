@@ -211,7 +211,7 @@ async def login_post(creds: login, request: Request):
     )
     if session_token:
         access = await db.getAccess(session_token)
-        if access = 'player':
+        if access == 'player':
             redirect = RedirectResponse(url="/home", status_code=303)
         else:
             redirect = RedirectResponse(url="/tables", status_code=303)
