@@ -128,6 +128,7 @@ def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
     queues = {}
     for queue in activeQueue:
         queues[queue["tableid"]] = {"game": queue["game"], "position": queue["position"], "length": queue["length"]}
+    return queues
 
 
 #------------------------ Route helper functions ------------------------#
