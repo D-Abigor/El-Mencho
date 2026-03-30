@@ -692,7 +692,7 @@ async def endGame(result: dict, tablenum: str):
                        WHERE ap.tableId = $1;""",
                     tablenum
                 )
-                print("players:" players)
+                print("players:", players)
 
                 balance_updates = []
                 logs = []
