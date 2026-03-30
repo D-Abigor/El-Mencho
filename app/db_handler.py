@@ -1,6 +1,7 @@
 import asyncpg
 import asyncio
 import os
+import uuid as _uuid
 from dotenv import load_dotenv
 from passlib.hash import bcrypt
 from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability, authenticationFailure, transactionError
@@ -28,29 +29,38 @@ async def init_conn_pool_and_cleaner():
 
 #----------------- Internal Helpers ----------------------#
 
-async def _uuidFromSession(session_token: str) -> str:
+def _parse_uuid(value: str) -> _uuid.UUID:
+    """Parse a string to uuid.UUID, raising InvalidSession on failure."""
+    try:
+        return _uuid.UUID(str(value))
+    except (TypeError, ValueError):
+        raise InvalidSession("Session invalid or expired")
+
+
+async def _uuidFromSession(session_token: str) -> _uuid.UUID:
+    token = _parse_uuid(session_token)
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             """SELECT user_id FROM sessions
                WHERE session_token = $1 AND expires_at > NOW();""",
-            session_token,
+            token,
         )
         if not row:
             raise InvalidSession("Session invalid or expired")
-        return row["user_id"]
+        return row["user_id"]          # asyncpg returns uuid.UUID — keep native type
 
 
-async def _getuuid(username: str) -> str:
+async def _getuuid(username: str) -> _uuid.UUID:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT id FROM users WHERE username = $1;", username
         )
         if not row:
             raise dbError("Internal db error - could not get corresponding uuid for your username")
-        return str(row["id"])
+        return row["id"]               # uuid.UUID
 
 
-async def _getUsernameFromUuid(uuid: str) -> str:
+async def _getUsernameFromUuid(uuid: _uuid.UUID) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT username FROM users WHERE id = $1;", uuid
@@ -60,7 +70,7 @@ async def _getUsernameFromUuid(uuid: str) -> str:
         return row["username"]
 
 
-async def _getTeamnameFromUuid(uuid: str) -> str:
+async def _getTeamnameFromUuid(uuid: _uuid.UUID) -> str:
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT affiliation FROM users WHERE id = $1;", uuid
@@ -84,15 +94,15 @@ def _gameLogstoDescriptive(gamelogs: list[asyncpg.Record]):
     return cleanedLogs
 
 
-def _transactionstoDescriptive(transactionlogs: list[asyncpg.Record], uuid: str):
+def _transactionstoDescriptive(transactionlogs: list[asyncpg.Record], uuid: _uuid.UUID):
     cleanedLogs = []
     for entry in transactionlogs:
         change = entry["change"]
         source = entry["source"]
         destination = entry["destination"]
-        if str(source) == str(uuid):
+        if source == uuid:
             line = f"you sent {destination} {change}"
-        elif str(destination) == str(uuid):
+        elif destination == uuid:
             line = f"{source} sent you {change}"
         cleanedLogs.append(line)
     return cleanedLogs
@@ -125,19 +135,23 @@ def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
 #------------------------ Route helper functions ------------------------#
 
 async def validate(session_token: str, role: str) -> bool:
+    try:
+        token = _uuid.UUID(str(session_token))
+    except (TypeError, ValueError):
+        return False
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
             """SELECT u.access
                FROM sessions s
                JOIN users u ON s.user_id = u.id
                WHERE s.session_token = $1 AND s.expires_at > NOW();""",
-            session_token,
+            token,
         )
     return bool(row and row["access"] == role)
 
 
 async def getPayees(session_token: str):
-    # single query — resolves uuid, teamname and payee list in one shot
+    token = _parse_uuid(session_token)
     async with conn_pool.acquire() as conn:
         rows = await conn.fetch(
             """SELECT u2.username
@@ -146,7 +160,7 @@ async def getPayees(session_token: str):
                JOIN users u2 ON u2.affiliation = u1.affiliation AND u2.id != u1.id
                WHERE s.session_token = $1 AND s.expires_at > NOW()
                ORDER BY u2.username;""",
-            session_token
+            token
         )
     if not rows:
         raise dbError("Internal db error - could not get list of payees")
@@ -189,9 +203,13 @@ async def getSessionToken(username: str, password: str):
 
 
 async def deleteSessionToken(session_token: str):
+    try:
+        token = _uuid.UUID(str(session_token))
+    except (TypeError, ValueError):
+        return  # nothing to delete for a malformed token
     async with conn_pool.acquire() as conn:
         await conn.execute(
-            "DELETE FROM sessions WHERE session_token = $1;", session_token
+            "DELETE FROM sessions WHERE session_token = $1;", token
         )
 
 
@@ -207,14 +225,14 @@ async def transfer(session_id: str, destination_username: str, amount):
     source_uuid = await _uuidFromSession(session_id)
     dest_uuid = await _getuuid(destination_username)
 
-    if str(source_uuid) == str(dest_uuid):
+    if source_uuid == dest_uuid:
         raise transactionError("Cannot transfer to yourself")
 
     async with conn_pool.acquire() as conn:
         try:
             async with conn.transaction():
                 # Lock both rows in consistent UUID order to prevent deadlock
-                ids = sorted([str(source_uuid), str(dest_uuid)])
+                ids = sorted([source_uuid, dest_uuid], key=lambda u: str(u))
                 await conn.fetchrow(
                     "SELECT balance FROM accounts WHERE user_id = $1 FOR UPDATE;",
                     ids[0],
@@ -259,7 +277,6 @@ async def transfer(session_id: str, destination_username: str, amount):
 
 
 async def getPlayerHome(session_token: str):
-    # single query — resolves user details, team credits, game logs and transactions together
     async with conn_pool.acquire() as conn:
         uuid = await _uuidFromSession(session_token)
 
@@ -577,7 +594,7 @@ async def setTableConfiguration(tablename: str, game: str, maxPlayers: int):
 async def startGame(tablenum: str):
     async with conn_pool.acquire() as conn:
         response = await conn.execute(
-            "UPDATE tables SET status = 'running' WHERE tableId = $1;", tablenum
+            "UPDATE tables SET status = 'active' WHERE tableId = $1;", tablenum
         )
     if response.endswith("1"):
         return {"status": "ok"}
@@ -636,7 +653,7 @@ async def endGame(result: dict, tablenum: str):
                 )
 
                 await conn.execute(
-                    "UPDATE tables SET status = 'idle' WHERE tableId = $1;", tablenum
+                    "UPDATE tables SET status = 'waiting' WHERE tableId = $1;", tablenum
                 )
 
         except Exception as e:
