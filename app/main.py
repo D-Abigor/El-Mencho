@@ -124,7 +124,7 @@ def username_availability_exception_handler(request: Request, exc: Exception):
 
 
 @app.get("/leaderBoard")
-async with getLeaderBoard(request: Request):
+async def getLeaderBoard(request: Request):
   return pages.TemplateResponse("leaderboard.html", {"request": request, "leaderboard": leaderboard})
 
 
