@@ -173,7 +173,7 @@ async def getPayees(session_token: str):
 async def getSessionToken(username: str, password: str):
     # input length guard — bcrypt silently truncates at 72 bytes
     if len(password.encode()) > 72:
-        raise A("Password too long")
+        raise AuthenticationFailure("Password too long")
 
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
@@ -195,7 +195,7 @@ async def getSessionToken(username: str, password: str):
                 return new_session["session_token"]
             else:
                 print("invalid credentials")
-                raise A("Invalid credentials")
+                raise AuthenticationFailure("Invalid credentials")
         else:
             print("user does not exist")
             raise DbError("db error - user does not exist")
@@ -222,15 +222,15 @@ async def transfer(session_id: str, destination_username: str, amount):
     try:
         amount = int(amount)
     except (TypeError, ValueError):
-        raise T("Amount must be a whole number")
+        raise TransactionError("Amount must be a whole number")
     if amount <= 0:
-        raise T("Amount must be greater than zero")
+        raise TransactionError("Amount must be greater than zero")
 
     source_uuid = await _uuidFromSession(session_id)
     dest_uuid = await _getuuid(destination_username)
 
     if source_uuid == dest_uuid:
-        raise T("Cannot transfer to yourself")
+        raise TransactionError("Cannot transfer to yourself")
 
     async with conn_pool.acquire() as conn:
         try:
@@ -250,16 +250,16 @@ async def transfer(session_id: str, destination_username: str, amount):
                     "SELECT balance FROM accounts WHERE user_id = $1;", source_uuid
                 )
                 if not src_row:
-                    raise T("Your account does not exist")
+                    raise TransactionError("Your account does not exist")
 
                 dst_row = await conn.fetchrow(
                     "SELECT balance FROM accounts WHERE user_id = $1;", dest_uuid
                 )
                 if not dst_row:
-                    raise T("Recipient account does not exist")
+                    raise TransactionError("Recipient account does not exist")
 
                 if src_row["balance"] < amount:
-                    raise T("Insufficient balance")
+                    raise TransactionError("Insufficient balance")
 
                 await conn.execute(
                     "INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);",
@@ -274,10 +274,8 @@ async def transfer(session_id: str, destination_username: str, amount):
                     amount, dest_uuid,
                 )
                 return True
-        except (T):
-            raise
         except Exception as e:
-            raise T(f"Transaction failed: {str(e)}")
+            raise TransactionError(f"Transaction failed: {str(e)}")
 
 
 async def getPlayerHome(session_token: str):
@@ -391,9 +389,9 @@ async def confirmParticipation(session_token: str, tablenum: str, confirmation: 
             try:
                 betAmount = int(betAmount)
             except (TypeError, ValueError):
-                raise T("Bet amount must be a whole number")
+                raise TransactionError("Bet amount must be a whole number")
             if betAmount <= 0:
-                raise T("Bet amount must be greater than zero")
+                raise TransactionError("Bet amount must be greater than zero")
             
             async with conn.transaction():
                 balance_row = await conn.fetchrow(
@@ -402,7 +400,7 @@ async def confirmParticipation(session_token: str, tablenum: str, confirmation: 
                 if not balance_row:
                     raise DbError("Account not found")
                 if balance_row["balance"] < betAmount:
-                    raise T("Insufficient balance to place bet")
+                    raise TransactionError("Insufficient balance to place bet")
                 await conn.execute(
                     "UPDATE accounts SET balance = balance - $1 WHERE user_id = $2;",
                     betAmount, uuid
