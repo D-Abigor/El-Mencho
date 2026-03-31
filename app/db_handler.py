@@ -4,7 +4,7 @@ import os
 import uuid as _uuid
 from dotenv import load_dotenv
 from passlib.hash import bcrypt
-from exceptions import InvalidSession, DbError, CouldNotGetUsernameAvailability, AuthenticationFailure, TransactionError
+from errors.py import InvalidSession, DbError, CouldNotGetUsernameAvailability, AuthenticationFailure, TransactionError
 
 load_dotenv()
 

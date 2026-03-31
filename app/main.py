@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 import db_handler as db
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
-from exceptions import InvalidSession, DbError, CouldNotGetUsernameAvailability, AuthenticationFailure, TransactionError
+from errors.py import InvalidSession, DbError, CouldNotGetUsernameAvailability, AuthenticationFailure, TransactionError
 from fastapi.staticfiles import StaticFiles
 
 @asynccontextmanager
