@@ -4,7 +4,7 @@ import os
 import uuid as _uuid
 from dotenv import load_dotenv
 from passlib.hash import bcrypt
-from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability, authenticationFailure, transactionError
+from exceptions import InvalidSession, DbError, CouldNotGetUsernameAvailability, AuthenticationFailure, TransactionError
 
 load_dotenv()
 
@@ -56,7 +56,7 @@ async def _getuuid(username: str) -> _uuid.UUID:
             "SELECT id FROM users WHERE username = $1;", username
         )
         if not row:
-            raise dbError("Internal db error - could not get corresponding uuid for your username")
+            raise DbError("Internal db error - could not get corresponding uuid for your username")
         return row["id"]               # uuid.UUID
 
 
@@ -66,7 +66,7 @@ async def _getUsernameFromUuid(uuid: _uuid.UUID) -> str:
             "SELECT username FROM users WHERE id = $1;", uuid
         )
         if not row:
-            raise dbError("Internal db error - could not get corresponding username from uuid")
+            raise DbError("Internal db error - could not get corresponding username from uuid")
         return row["username"]
 
 
@@ -76,7 +76,7 @@ async def _getTeamnameFromUuid(uuid: _uuid.UUID) -> str:
             "SELECT affiliation FROM users WHERE id = $1;", uuid
         )
         if not row:
-            raise dbError("Internal db error - could not get corresponding teamname from uuid")
+            raise DbError("Internal db error - could not get corresponding teamname from uuid")
         return row["affiliation"]
 
 
@@ -166,14 +166,14 @@ async def getPayees(session_token: str):
             token
         )
     if not rows:
-        raise dbError("Internal db error - could not get list of payees")
+        raise DbError("Internal db error - could not get list of payees")
     return [r["username"] for r in rows]
 
 
 async def getSessionToken(username: str, password: str):
     # input length guard — bcrypt silently truncates at 72 bytes
     if len(password.encode()) > 72:
-        raise authenticationFailure("Password too long")
+        raise A("Password too long")
 
     async with conn_pool.acquire() as conn:
         row = await conn.fetchrow(
@@ -195,10 +195,10 @@ async def getSessionToken(username: str, password: str):
                 return new_session["session_token"]
             else:
                 print("invalid credentials")
-                raise authenticationFailure("Invalid credentials")
+                raise A("Invalid credentials")
         else:
             print("user does not exist")
-            raise dbError("Internal db error - user does not exist")
+            raise DbError("db error - user does not exist")
 
 
 async def deleteSessionToken(session_token: str):
@@ -222,15 +222,15 @@ async def transfer(session_id: str, destination_username: str, amount):
     try:
         amount = int(amount)
     except (TypeError, ValueError):
-        raise transactionError("Amount must be a whole number")
+        raise T("Amount must be a whole number")
     if amount <= 0:
-        raise transactionError("Amount must be greater than zero")
+        raise T("Amount must be greater than zero")
 
     source_uuid = await _uuidFromSession(session_id)
     dest_uuid = await _getuuid(destination_username)
 
     if source_uuid == dest_uuid:
-        raise transactionError("Cannot transfer to yourself")
+        raise T("Cannot transfer to yourself")
 
     async with conn_pool.acquire() as conn:
         try:
@@ -250,16 +250,16 @@ async def transfer(session_id: str, destination_username: str, amount):
                     "SELECT balance FROM accounts WHERE user_id = $1;", source_uuid
                 )
                 if not src_row:
-                    raise transactionError("Your account does not exist")
+                    raise T("Your account does not exist")
 
                 dst_row = await conn.fetchrow(
                     "SELECT balance FROM accounts WHERE user_id = $1;", dest_uuid
                 )
                 if not dst_row:
-                    raise transactionError("Recipient account does not exist")
+                    raise T("Recipient account does not exist")
 
                 if src_row["balance"] < amount:
-                    raise transactionError("Insufficient balance")
+                    raise T("Insufficient balance")
 
                 await conn.execute(
                     "INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);",
@@ -274,10 +274,10 @@ async def transfer(session_id: str, destination_username: str, amount):
                     amount, dest_uuid,
                 )
                 return True
-        except (transactionError):
+        except (T):
             raise
         except Exception as e:
-            raise transactionError(f"Transaction failed: {str(e)}")
+            raise T(f"Transaction failed: {str(e)}")
 
 
 async def getPlayerHome(session_token: str):
@@ -391,18 +391,18 @@ async def confirmParticipation(session_token: str, tablenum: str, confirmation: 
             try:
                 betAmount = int(betAmount)
             except (TypeError, ValueError):
-                raise transactionError("Bet amount must be a whole number")
+                raise T("Bet amount must be a whole number")
             if betAmount <= 0:
-                raise transactionError("Bet amount must be greater than zero")
+                raise T("Bet amount must be greater than zero")
             
             async with conn.transaction():
                 balance_row = await conn.fetchrow(
                     "SELECT balance FROM accounts WHERE user_id = $1 FOR UPDATE;", uuid
                 )
                 if not balance_row:
-                    raise dbError("Account not found")
+                    raise DbError("Account not found")
                 if balance_row["balance"] < betAmount:
-                    raise transactionError("Insufficient balance to place bet")
+                    raise T("Insufficient balance to place bet")
                 await conn.execute(
                     "UPDATE accounts SET balance = balance - $1 WHERE user_id = $2;",
                     betAmount, uuid
@@ -413,7 +413,7 @@ async def confirmParticipation(session_token: str, tablenum: str, confirmation: 
                     uuid, tablenum, betAmount
                 )
                 if not response.endswith("1"):
-                    raise dbError(f"Could not confirm participation for table {tablenum}")
+                    raise DbError(f"Could not confirm participation for table {tablenum}")
                 await conn.execute(
                     "DELETE FROM queue WHERE userId = $1 AND tableId = $2;",
                     uuid, tablenum
@@ -520,7 +520,7 @@ async def getTableConfiguration(tableId: str):
             tableId
         )
     if not configuration:
-        raise dbError(f"Table {tableId} not found")
+        raise DbError(f"Table {tableId} not found")
     return {
         "game": configuration["game"],
         "maxPlayers": configuration["maxplayers"]
@@ -533,7 +533,7 @@ async def flushTable(tableId: str):
             "DELETE FROM activePlayers WHERE tableId = $1;", tableId
         )
     if status.endswith("0"):
-        raise dbError(f"Could not flush table {tableId}")
+        raise DbError(f"Could not flush table {tableId}")
     return {"status": "ok"}
 
 
@@ -548,7 +548,7 @@ async def removeFromQueue(username: str, tablenum: str):
             username, tablenum
         )
         if not row.endswith("1"):
-            raise dbError(f"Could not delete {username} from table {tablenum}")
+            raise DbError(f"Could not delete {username} from table {tablenum}")
     return {"status": "ok"}
 
 
@@ -576,7 +576,7 @@ async def removeFromGame(username: str, tablenum: str):
                     username, tablenum
                 )
         except Exception as e:
-            raise dbError(f"Could not remove {username} from {tablenum}: {str(e)}")
+            raise DbError(f"Could not remove {username} from {tablenum}: {str(e)}")
     return {"status": "ok"}
 
 async def getTableDetails(tableId: str):
@@ -652,7 +652,7 @@ async def startGame(tablenum: str):
     if response.endswith("1"):
         return {"status": "ok"}
     else:
-        raise dbError(f"Could not start game for table {tablenum}")
+        raise DbError(f"Could not start game for table {tablenum}")
 
 
 async def endGame(result: dict, tablenum: str):
@@ -727,5 +727,5 @@ async def endGame(result: dict, tablenum: str):
                 )
 
         except Exception as e:
-            raise dbError(str(e)) from e
+            raise DbError(str(e)) from e
     return {"status": "ok"}

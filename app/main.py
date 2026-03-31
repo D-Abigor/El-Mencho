@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 import db_handler as db
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
-from exceptions import InvalidSession, dbError, couldNotGetUsernameAvailability, authenticationFailure, transactionError
+from exceptions import InvalidSession, DbError, CouldNotGetUsernameAvailability, AuthenticationFailure, TransactionError
 from fastapi.staticfiles import StaticFiles
 
 @asynccontextmanager
@@ -101,20 +101,20 @@ async def validate_request(request: Request, call_next):
 async def invalid_session_handler(request: Request, exc: InvalidSession):
     return pages.TemplateResponse("error.html", {"request": request, "message": exc.message})
 
-@app.exception_handler(dbError)
-async def db_error_handler(request: Request, exc: dbError):
+@app.exception_handler(DbError)
+async def db_error_handler(request: Request, exc: DbError):
     return pages.TemplateResponse("error.html", {"request": request, "message": exc.message})
 
-@app.exception_handler(couldNotGetUsernameAvailability)
-async def username_availability_handler(request: Request, exc: couldNotGetUsernameAvailability):
+@app.exception_handler(CouldNotGetUsernameAvailability)
+async def username_availability_handler(request: Request, exc: CouldNotGetUsernameAvailability):
     return pages.TemplateResponse("error.html", {"request": request, "message": "Could not check if username is available."})
 
-@app.exception_handler(authenticationFailure)
-async def auth_failure_handler(request: Request, exc: authenticationFailure):
+@app.exception_handler(AuthenticationFailure)
+async def auth_failure_handler(request: Request, exc: AuthenticationFailure):
     return pages.TemplateResponse("error.html", {"request": request, "message": exc.message})
 
-@app.exception_handler(transactionError)
-async def transaction_error_handler(request: Request, exc: transactionError):
+@app.exception_handler(TransactionError)
+async def transaction_error_handler(request: Request, exc: TransactionError):
     return pages.TemplateResponse("error.html", {"request": request, "message": exc.message})
 
 
