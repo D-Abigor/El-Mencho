@@ -33,7 +33,6 @@ class transferDetail(BaseModel):
 class participationConfirm(BaseModel):
     tablenum: str
     confirmation: bool
-    betAmount: str
 
 class tableConfig(BaseModel):
     tablenum: str
@@ -268,6 +267,7 @@ async def addtoQueue(request: Request, tablenum: enterQueue):
 
 
 #--------------------- GET endpoints — Manager -----------------#
+
 
 @app.get("/tables")
 async def getTablesForManager(request: Request):
