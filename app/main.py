@@ -63,9 +63,8 @@ class enterQueue(BaseModel):
 def _redirect_login():
     return RedirectResponse(url="/login", status_code=303)
 
-def error_response(request: Request, message: str, status_code: int = 400):
-    return pages.TemplateResponse("error.html", {"request": request, "message": message}, status_code=status_code)
-
+def error_response(request: Request, message: str):
+    return RedirectResponse(url=f"/error?message={message}", status_code=303)
 #------------------------ Middleware ----------------------------#
 
 protected = ["/home", "/pay", "/payees", "/play", "/transfer", "/queue", "/gameConfirm"]
@@ -137,6 +136,9 @@ async def getLeaderBoard(request: Request):
     leaderboard = await db.getLeaderBoard()
     return pages.TemplateResponse("leaderboard.html", {"request": request, "leaderboard": leaderboard})
 
+@app.get("/error")
+async def error_page(request: Request, message: str = "An error occurred."):
+    return pages.TemplateResponse("error.html", {"request": request, "message": message})
 
 #----------------------- GET endpoints — Player --------------------#
 
