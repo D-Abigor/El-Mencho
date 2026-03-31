@@ -197,6 +197,7 @@ async def getSessionToken(username: str, password: str):
                 print("invalid credentials")
                 raise authenticationFailure("Invalid credentials")
         else:
+            print("user does not exist")
             raise dbError("Internal db error - user does not exist")
 
 
