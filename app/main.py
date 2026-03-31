@@ -120,6 +120,7 @@ async def auth_failure_handler(request: Request, exc: AuthenticationFailure):
 async def transaction_error_handler(request: Request, exc: TransactionError):
     return pages.TemplateResponse("error.html", {"request": request, "message": exc.message})
 
+print(app.exception_handlers)
 
 #----------------------- GET endpoints — Public --------------------#
 
