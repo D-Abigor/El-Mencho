@@ -135,7 +135,7 @@ def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
             "game": queue["game"],
             "position": queue["position"],
             "length": queue["length"],
-            "tableid": queue["tableid"]
+            "tableid": queue["tableid"],
             "playing": queue["playing"]
         }
     return queues
