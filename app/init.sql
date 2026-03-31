@@ -57,7 +57,7 @@ INSERT INTO users(id,username,password_hash,isleader,affiliation,access) VALUES
      ('91b0e16f-5e8e-42c6-b0bf-4030981aa035','tom','$2b$12$ltHFrg/zNeBqCTxyOzkzTOyDrE/SilMYsAwI2kOcSfcN.pW8CpQlK',FALSE,'manager','manager');
 
 INSERT INTO accounts(user_id, balance) VALUES
- ('21ba422f-57d6-49c8-b904-5158ce62ed95',2000)
+ ('21ba422f-57d6-49c8-b904-5158ce62ed95',2000),
  ('ca16f0d5-6511-423e-a852-22f19c20ebe1',2000),
  ('f3eb3148-0422-47fb-abcc-7340ef43640b',2000),
  ('afb95225-c876-44f8-b808-084b09e2e447',2000),
