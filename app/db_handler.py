@@ -356,7 +356,7 @@ async def getUserQueue(session_token: str):
                 ) uq ON uq.tableId = t.tableId AND uq.userId = $1
                 LEFT JOIN (
                 SELECT tableId, userId
-                    FROM gameplayers
+                    FROM activePlayers
                     WHERE userId = $1
                 ) gp ON gp.tableId = t.tableId;""",uuid
         )
