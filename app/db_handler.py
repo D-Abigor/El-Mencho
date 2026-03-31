@@ -561,6 +561,8 @@ async def flushTable(tableId: str):
         status = await conn.execute(
             "DELETE FROM activePlayers WHERE tableId = $1;", tableId
         )
+        status = await conn.execute(
+            "UPDATE tables SET status = $1 WHERE tableid = $2;", 'idle', tableId)
     if status.endswith("0"):
         raise DbError(f"Could not flush table {tableId}")
     return {"status": "ok"}
