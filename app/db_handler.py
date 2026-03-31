@@ -507,15 +507,26 @@ async def confirmPlayers(tablenum: str):
     # new logic -> slots left(how many to pick) = max_players - playersinqreadytojoin - playersalreadyseated
     async with conn_pool.acquire() as conn:
         await conn.execute(
-            """WITH slots AS (
-    SELECT GREATEST(0, 
-        (SELECT max_players FROM tables WHERE tableid = $1 FOR UPDATE) 
-        - COUNT(DISTINCT q3.userid) 
-        - COUNT(DISTINCT ap.userid)
-    ) AS available
-    FROM queue q3
-    FULL OUTER JOIN activeplayers ap ON ap.tableid = $1
-    WHERE q3.tableid = $1 AND q3.readytojoin = TRUE
+            """WITH locked_table AS (
+    -- Lock the table row to prevent concurrent slot races
+    SELECT max_players
+    FROM tables
+    WHERE tableid = $1
+    FOR UPDATE
+),
+occupied AS (
+    -- Count distinct users already active or already marked ready
+    SELECT 
+        COUNT(DISTINCT ap.userid) AS active_count,
+        COUNT(DISTINCT q.userid)  AS ready_count
+    FROM activeplayers ap
+    FULL OUTER JOIN queue q 
+        ON q.tableid = $1 AND q.readytojoin = TRUE
+    WHERE ap.tableid = $1
+),
+slots AS (
+    SELECT GREATEST(0, lt.max_players - o.active_count - o.ready_count)::INT AS available
+    FROM locked_table lt, occupied o
 )
 UPDATE queue q
 SET readytojoin = TRUE
@@ -523,9 +534,9 @@ WHERE q.number IN (
     SELECT q2.number
     FROM queue q2, slots
     WHERE q2.tableid = $1
-        AND q2.readytojoin = FALSE
+      AND q2.readytojoin = FALSE
     ORDER BY q2.timeofjoin ASC
-    LIMIT slots.available
+    LIMIT (SELECT available FROM slots)  -- must be a subquery, not a column ref
 );""",tablenum
         )
 
