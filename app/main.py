@@ -13,7 +13,6 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
-print(app.exception_handlers)
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 pages = Jinja2Templates(directory="frontend")
 
@@ -93,7 +92,10 @@ async def validate_request(request: Request, call_next):
             )
 
     request.state.session_token = session_token
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        raise e
     return response
 
 #---------------------- Exception Handlers -----------------------#
