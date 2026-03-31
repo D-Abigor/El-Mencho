@@ -309,7 +309,7 @@
       const res = await fetch('/gameConfirm');
       const data = await res.json();
       const ready = data.find(q => q.readyToJoin === true);
-      if (ready && !modalOpen) {
+      if (ready && !modalOpen && !responded) {
         document.getElementById('notifBar').classList.add('visible');
         openHud(ready.tableId);
       }
@@ -360,9 +360,8 @@
       credentials: 'include',
       body: JSON.stringify({
         tablenum: tableId,
-        confirmation: accepted,
-        betAmount: "0"
-      })
+        confirmation: accepted
+       })
     });
     if (res.ok || res.redirected) {
       window.location.href = '/play';
