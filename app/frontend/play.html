@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Play — The House</title>
-  <link rel="stylesheet" href="/static/base.css">
+ <link rel="stylesheet" href="/static/base.css">
   <style>
     .table-label {
       font-size: 0.7rem;
@@ -166,6 +166,7 @@
       display: none;
     }
     .notification-bar.visible { display: block; }
+    
   </style>
 </head>
 <body>
@@ -243,7 +244,15 @@
       </div>
     </div>
   </div>
+<div id="confirmModal" class="hidden">
+  <div class="modal-box">
+    <h2>Join Table?</h2>
+    <p id="timer">Time left: 30s</p>
 
+    <button onclick="handleConfirm(true)">Accept</button>
+    <button onclick="handleConfirm(false)">Reject</button>
+  </div>
+</div>
   <script>
     async function joinQueue(tableId, gameName) {
       const res = await fetch('/play', {
@@ -254,21 +263,78 @@
       if (res.ok) location.reload();
     }
 
-    async function submitConfirm(accepted) {
-      const tableId = document.getElementById('modalTableId').value;
-      const bet = document.getElementById('betAmount').value;
-      const res = await fetch('/gameConfirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tablenum: tableId,
-          confirmation: accepted,
-          betAmount: bet || '0'
-        })
-      });
-      if (res.ok || res.redirected) location.href = '/play';
-    }
+let timerInterval;
+let timeLeft = 30;
+let responded = false;
 
+
+
+function joinQueue(tableId, gameName) {
+  
+  document.getElementById('modalTableId').value = tableId;
+
+  
+  openConfirmModal();
+}
+
+
+
+function openConfirmModal() {
+  document.getElementById("confirmModal").classList.remove("hidden");
+
+  timeLeft = 30;
+  responded = false;
+
+  document.getElementById("timer").innerText = `Time left: ${timeLeft}s`;
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = `Time left: ${timeLeft}s`;
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+
+      if (!responded) {
+        handleConfirm(false); 
+      }
+    }
+  }, 1000);
+}
+
+
+
+function handleConfirm(accepted) {
+  if (responded) return;
+
+  responded = true;
+  clearInterval(timerInterval);
+
+  document.getElementById("confirmModal").classList.add("hidden");
+
+  submitConfirm(accepted);
+}
+
+
+
+async function submitConfirm(accepted) {
+  const tableId = document.getElementById('modalTableId').value;
+
+  const res = await fetch('/gameConfirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', 
+    body: JSON.stringify({
+      tablenum: tableId,
+      confirmation: accepted
+    })
+  });
+
+  if (res.ok || res.redirected) {
+    window.location.href = '/play';
+  } else {
+    alert("Something went wrong");
+  }
+}
     // Poll for readyToJoin
     async function pollQueue() {
       try {
