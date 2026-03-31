@@ -229,28 +229,27 @@
       {% endfor %}
   </div>
   <!-- Bet + confirm modal -->
-  <div class="modal-overlay" id="confirmModal">
-    <div class="modal">
-      <h2 class="modal-title" id="modalTitle">Confirm Participation</h2>
-      <p class="modal-sub" id="modalSub">You've been called to the table</p>
-      <input type="hidden" id="modalTableId">
-      <div class="form-group">
-        <label class="label" for="betAmount">Your Bet</label>
-        <input type="number" id="betAmount" placeholder="Enter bet amount" min="1">
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-gold" onclick="submitConfirm(true)">Accept & Bet</button>
-        <button class="btn btn-danger" onclick="submitConfirm(false)">Decline</button>
-      </div>
-    </div>
-  </div>
-<div id="confirmModal" class="hidden">
-  <div class="modal-box">
-    <h2>Join Table?</h2>
-    <p id="timer">Time left: 30s</p>
+ <div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h2 class="modal-title" id="modalTitle">Confirm Participation</h2>
+    <p class="modal-sub" id="modalSub">You've been called to the table</p>
 
-    <button onclick="handleConfirm(true)">Accept</button>
-    <button onclick="handleConfirm(false)">Reject</button>
+    <!-- TIMER -->
+    <p id="timer" style="color:#4ade80; font-size:0.85rem; margin-bottom:15px;">
+      Time left: 30s
+    </p>
+
+    <input type="hidden" id="modalTableId">
+
+    <div class="form-group">
+      <label class="label" for="betAmount">Your Bet</label>
+      <input type="number" id="betAmount" placeholder="Enter bet amount" min="1">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="handleConfirm(true)">Accept & Bet</button>
+      <button class="btn btn-danger" onclick="handleConfirm(false)">Decline</button>
+    </div>
   </div>
 </div>
   <script>
@@ -316,13 +315,72 @@ function handleConfirm(accepted) {
 
 
 
+let timerInterval;
+let timeLeft = 30;
+let responded = false;
+
+
+// OPEN MODAL (USED BY DEALER CALL)
+function openConfirmModal(tableId, gameName) {
+ openConfirmModal(ready.tableId, gameName);
+
+  document.getElementById("modalTableId").value = tableId;
+
+  document.getElementById("modalTitle").textContent =
+    `Table ${tableId} — ${gameName}`;
+
+  document.getElementById("modalSub").textContent =
+    "You've been called up. Place your bet to confirm.";
+
+  timeLeft = 30;
+  responded = false;
+
+  updateTimerUI();
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!responded) handleConfirm(false); // AUTO EXPIRE
+    }
+  }, 1000);
+}
+
+
+// TIMER UI UPDATE
+function updateTimerUI() {
+  const timerEl = document.getElementById("timer");
+  timerEl.innerText = `Time left: ${timeLeft}s`;
+
+  if (timeLeft <= 10) {
+    timerEl.style.color = "#ef4444"; // red warning
+  }
+}
+
+
+// ACCEPT / DECLINE / TIMEOUT
+function handleConfirm(accepted) {
+  if (responded) return;
+
+  responded = true;
+  clearInterval(timerInterval);
+
+  document.getElementById("confirmModal").classList.remove("open");
+
+  submitConfirm(accepted);
+}
+
+
+// BACKEND CALL
 async function submitConfirm(accepted) {
   const tableId = document.getElementById('modalTableId').value;
 
   const res = await fetch('/gameConfirm', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', 
+    credentials: 'include',
     body: JSON.stringify({
       tablenum: tableId,
       confirmation: accepted
@@ -335,23 +393,23 @@ async function submitConfirm(accepted) {
     alert("Something went wrong");
   }
 }
-    // Poll for readyToJoin
-    async function pollQueue() {
-      try {
-        const res = await fetch('/gameConfirm');
-        const data = await res.json();
-        const ready = data.find(q => q.readyToJoin === true);
-        if (ready) {
-          const card = document.querySelector(`.game-card[data-tableid="${ready.tableId}"]`);
-          const gameName = card ? card.dataset.game : `Table ${ready.tableId}`;
-          document.getElementById('notifBar').classList.add('visible');
-          document.getElementById('modalTitle').textContent = `Table ${ready.tableId} — ${gameName}`;
-          document.getElementById('modalSub').textContent = `You've been called up. Place your bet to confirm.`;
-          document.getElementById('modalTableId').value = ready.tableId;
-          document.getElementById('confirmModal').classList.add('open');
-        }
-      } catch(e) {}
+   async function pollQueue() {
+  try {
+    const res = await fetch('/gameConfirm');
+    const data = await res.json();
+
+    const ready = data.find(q => q.readyToJoin === true);
+
+    if (ready) {
+      const card = document.querySelector(`.game-card[data-tableid="${ready.tableId}"]`);
+      const gameName = card ? card.dataset.game : `Table ${ready.tableId}`;
+
+      document.getElementById('notifBar').classList.add('visible');
+
+      openConfirmModal(ready.tableId, gameName);
     }
+  } catch(e) {}
+}
 
     setInterval(pollQueue, 5000);
     pollQueue();
