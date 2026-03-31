@@ -186,18 +186,11 @@ async def getSessionToken(username: str, password: str):
                 bcrypt.verify, password, str(row["password_hash"])
             )
             if valid:
-                existing = await conn.fetchrow(
-                    """SELECT session_token FROM sessions
-                       WHERE user_id = $1 AND expires_at > NOW();""",
-                    row["id"],
-                )
-                if existing:
-                    return existing["session_token"]
                 new_session = await conn.fetchrow(
                     """INSERT INTO sessions (user_id, expires_at)
                        VALUES ($1, NOW() + INTERVAL '1 day')
                        RETURNING session_token;""",
-                    row["id"],
+                    row["id"]
                 )
                 return new_session["session_token"]
             else:

@@ -11,7 +11,7 @@ CREATE TABLE sessions(
     session_token uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    expires_at TIMESTAMP NOT NULL DEFAULT (now() + INTERVAL '5 hours'),
+    expires_at TIMESTAMP NOT NULL DEFAULT (now() + INTERVAL '8 hours'),
     CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -29,7 +29,7 @@ CREATE TABLE transactions(
     processed_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE tables(                                        -- FIX: added semicolons throughout
+CREATE TABLE tables(                                     
     tableId TEXT PRIMARY KEY,
     gameSelected TEXT CHECK (gameSelected IN ('Teen Patti','Poker','3 of spades','Blackjack','Rummy','Crazy 8s')),
     status TEXT CHECK (status IN ('idle','active', 'ended')),
@@ -76,7 +76,7 @@ CREATE TABLE gamesplayed(
     game TEXT NOT NULL,
     tableid TEXT NOT NULL,
     timeoffinish TIMESTAMP DEFAULT now(),
-    CONSTRAINT gamesplayed_tableid_fkey FOREIGN KEY (tableid) REFERENCES tables(tableid)  -- FIX: syntax
+    CONSTRAINT gamesplayed_tableid_fkey FOREIGN KEY (tableid) REFERENCES tables(tableid)
 );
 
 CREATE TABLE gameplayerlogs(
@@ -84,11 +84,10 @@ CREATE TABLE gameplayerlogs(
     gameid UUID NOT NULL,
     userid UUID NOT NULL,
     initialbet INT NOT NULL,
-    finalamount INT NOT NULL CHECK (finalamount >= 0),       -- FIX: column name was inconsistent
+    finalamount INT NOT NULL CHECK (finalamount >= 0), 
     timeoffinish TIMESTAMP NOT NULL DEFAULT now(),
     CONSTRAINT gameplayerlogs_gameid_fkey FOREIGN KEY (gameid) REFERENCES gamesplayed(gameid),
     CONSTRAINT gameplayerlogs_userid_fkey FOREIGN KEY (userid) REFERENCES users(id)
-    -- FIX: removed bogus FK on timeoffinish — timestamps can't reference another table
 );
 
 
