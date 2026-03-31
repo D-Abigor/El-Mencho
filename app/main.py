@@ -63,6 +63,8 @@ class enterQueue(BaseModel):
 def _redirect_login():
     return RedirectResponse(url="/login", status_code=303)
 
+def _error_response(request: Request, message: str, status_code: int = 400):
+    return pages.TemplateResponse("error.html", {"request": request, "message": message}, status_code=status_code)
 
 #------------------------ Middleware ----------------------------#
 
@@ -163,7 +165,10 @@ async def payment(request: Request, to: str = None):
 @app.get("/payees")
 async def payees(request: Request):
     session_token = request.state.session_token
-    payeeList = await db.getPayees(session_token=session_token)
+    try:
+        payeeList = await db.getPayees(session_token=session_token)
+    except DbError as e:
+        return error_response(request, e.message)
     return pages.TemplateResponse("payees.html", {"request": request, "payees": payeeList})
 
 @app.get("/logout")
@@ -203,9 +208,15 @@ async def checkParticipation(request: Request):
 
 @app.post("/login")
 async def login_post(creds: login, request: Request):
-    session_token = await db.getSessionToken(
-        username=creds.username, password=creds.password
-    )
+    try:
+        session_token = await db.getSessionToken(
+            username=creds.username, password=creds.password
+        )
+    except AuthenticationFailure as e:
+        return error_response(request, e.message)
+    except DbError as e:
+        return error_response(request, e.message)
+
     if session_token:
         access = await db.getAccess(session_token)
         if access == 'player':
@@ -224,7 +235,10 @@ async def login_post(creds: login, request: Request):
 @app.post("/transfer")
 async def transfer_post(details: transferDetail, request: Request):
     session_token = request.state.session_token
-    await db.transfer(session_token, details.recepient, details.amount)
+    try:
+        await db.transfer(session_token, details.recepient, details.amount)
+    except TransactionError as e:
+        return error_response(request, e.message)
     return pages.TemplateResponse(
         "successful_transaction.html",
         {"request": request, "message": f"Successfully transferred {details.amount} credits to {details.recepient}."}
@@ -233,12 +247,17 @@ async def transfer_post(details: transferDetail, request: Request):
 @app.post("/gameConfirm")
 async def confirmParticipation(request: Request, participation: participationConfirm):
     session_token = request.state.session_token
-    await db.confirmParticipation(
-        session_token=session_token,
-        tablenum=participation.tablenum,
-        confirmation=participation.confirmation,
-        betAmount="350"
-    )
+    try:
+        await db.confirmParticipation(
+            session_token=session_token,
+            tablenum=participation.tablenum,
+            confirmation=participation.confirmation,
+            betAmount="350"
+        )
+    except TransactionError as e:
+        return error_response(request, e.message)
+    except DbError as e:
+        return error_response(request, e.message)
     return RedirectResponse(url="/play", status_code=303)
 
 @app.post("/play")
