@@ -13,6 +13,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+print(app.exception_handlers)
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 pages = Jinja2Templates(directory="frontend")
 
