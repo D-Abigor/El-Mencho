@@ -507,21 +507,24 @@ async def confirmPlayers(tablenum: str):
     # new logic -> slots left(how many to pick) = max_players - playersinqreadytojoin - playersalreadyseated
     async with conn_pool.acquire() as conn:
         await conn.execute(
-            """UPDATE queue q
-                SET readytojoin = TRUE
-                WHERE q.number IN (
-            SELECT q2.number
-            FROM queue q2
-            JOIN tables t ON q2.tableid = t.tableid
-            WHERE q2.tableid = $1
-                AND q2.readytojoin = FALSE
-            ORDER BY q2.timeofjoin ASC
-            LIMIT (
-                SELECT GREATEST(0, t2.max_players - COUNT(DISTINCT q3.userid) - COUNT(DISTINCT ap.userid))
-                FROM tables t2
-                LEFT JOIN queue q3 ON q3.tableid = t2.tableid AND q3.readytojoin = TRUE
-                LEFT JOIN activeplayers ap ON ap.tableid = t2.tableid
-                WHERE t2.tableid = $1)
+            """WITH lock AS (
+                SELECT max_players FROM tables WHERE tableid = $1 FOR UPDATE
+            ),
+            slots AS (
+                SELECT GREATEST(0, l.max_players - COUNT(DISTINCT q3.userid) - COUNT(DISTINCT ap.userid)) AS available
+                FROM lock l
+                LEFT JOIN queue q3 ON q3.tableid = $1 AND q3.readytojoin = TRUE
+                LEFT JOIN activeplayers ap ON ap.tableid = $1
+            )
+            UPDATE queue q
+            SET readytojoin = TRUE
+            WHERE q.number IN (
+                SELECT q2.number
+                FROM queue q2, slots
+                WHERE q2.tableid = $1
+                    AND q2.readytojoin = FALSE
+                ORDER BY q2.timeofjoin ASC
+                LIMIT slots.available
             );""",tablenum
         )
 
