@@ -228,38 +228,73 @@
       </div>
       {% endfor %}
   </div>
-  <!-- Bet + confirm modal -->
- <div class="modal-overlay" id="confirmModal">
-  <div class="modal">
-    <h2 class="modal-title" id="modalTitle">Confirm Participation</h2>
-    <p class="modal-sub" id="modalSub">You've been called to the table</p>
+  <!-- Floating confirm HUD -->
+<div id="confirmHud" style="
+  display:none;
+  position:fixed;
+  bottom:28px;
+  right:28px;
+  z-index:300;
+  background:#0a1a0f;
+  border:1px solid rgba(74,222,128,0.3);
+  border-radius:14px;
+  padding:18px 20px 16px;
+  width:260px;
+  overflow:hidden;
+  font-family:inherit;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+">
+  <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.7),transparent);"></div>
 
-    <!-- TIMER -->
-    <p id="timer" style="color:#4ade80; font-size:0.85rem; margin-bottom:15px;">
-      Time left: 30s
-    </p>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 1.5s ease infinite;display:inline-block;flex-shrink:0;"></span>
+    <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#4ade80;">
+      Table <span id="hudTableLabel">—</span> — You're up
+    </span>
+  </div>
 
-    <input type="hidden" id="modalTableId">
+  <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:14px;font-style:italic;">
+    Confirm your seat at the table
+  </div>
 
-    <div class="form-group">
-      <label class="label" for="betAmount">Your Bet</label>
-      <input type="number" id="betAmount" placeholder="Enter bet amount" min="1">
-    </div>
+  <!-- Depleting timer bar -->
+  <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:16px;overflow:hidden;">
+    <div id="hudTimerBar" style="height:100%;width:100%;background:#4ade80;border-radius:2px;transition:width 1s linear,background 0.5s;"></div>
+  </div>
 
-    <div class="modal-actions">
-      <button class="btn btn-gold" onclick="handleConfirm(true)">Accept & Bet</button>
-      <button class="btn btn-danger" onclick="handleConfirm(false)">Decline</button>
-    </div>
+  <input type="hidden" id="hudTableId">
+
+  <div style="display:flex;gap:10px;justify-content:flex-end;">
+    <!-- Cross = decline -->
+    <button onclick="handleHudConfirm(false)" style="
+      width:42px;height:42px;border-radius:50%;
+      background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+    ">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <line x1="3" y1="3" x2="13" y2="13" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+        <line x1="13" y1="3" x2="3" y2="13" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <!-- Tick = accept -->
+    <button onclick="handleHudConfirm(true)" style="
+      width:42px;height:42px;border-radius:50%;
+      background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.4);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+    ">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polyline points="2,8 6,12 14,4" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </button>
   </div>
 </div>
- <script>
-  // ── State ──────────────────────────────────────────────────────────────
+
+<script>
   let timerInterval = null;
   let timeLeft = 30;
   let responded = false;
   let modalOpen = false;
 
-  // ── Join queue (button click) ──────────────────────────────────────────
   async function joinQueue(tableId, gameName) {
     const res = await fetch('/play', {
       method: 'POST',
@@ -269,18 +304,14 @@
     if (res.ok) location.reload();
   }
 
-  // ── Poll for dealer call ───────────────────────────────────────────────
   async function pollQueue() {
     try {
       const res = await fetch('/gameConfirm');
       const data = await res.json();
       const ready = data.find(q => q.readyToJoin === true);
-
       if (ready && !modalOpen) {
-        const card = document.querySelector(`.game-card[data-tableid="${ready.tableId}"]`);
-        const gameName = card ? card.dataset.game : `Table ${ready.tableId}`;
         document.getElementById('notifBar').classList.add('visible');
-        openConfirmModal(ready.tableId, gameName);
+        openHud(ready.tableId);
       }
     } catch (e) {}
   }
@@ -288,51 +319,41 @@
   setInterval(pollQueue, 5000);
   pollQueue();
 
-  // ── Open modal ─────────────────────────────────────────────────────────
-  function openConfirmModal(tableId, gameName) {
+  function openHud(tableId) {
     modalOpen = true;
     responded = false;
     timeLeft = 30;
 
-    document.getElementById('modalTableId').value = tableId;
-    document.getElementById('modalTitle').textContent = `Table ${tableId} — ${gameName}`;
-    document.getElementById('modalSub').textContent = "You've been called up. Place your bet to confirm.";
-    document.getElementById('confirmModal').classList.remove('hidden');
-
-    updateTimerUI();
+    document.getElementById('hudTableId').value = tableId;
+    document.getElementById('hudTableLabel').textContent = tableId;
+    document.getElementById('hudTimerBar').style.width = '100%';
+    document.getElementById('hudTimerBar').style.background = '#4ade80';
+    document.getElementById('confirmHud').style.display = 'block';
 
     timerInterval = setInterval(() => {
       timeLeft--;
-      updateTimerUI();
+      const pct = (timeLeft / 30) * 100;
+      const bar = document.getElementById('hudTimerBar');
+      bar.style.width = Math.max(0, pct) + '%';
+      bar.style.background = pct < 30 ? '#ef4444' : pct < 60 ? '#f59e0b' : '#4ade80';
       if (timeLeft <= 0) {
         clearInterval(timerInterval);
-        if (!responded) handleConfirm(false);   // auto-expire → decline
+        if (!responded) handleHudConfirm(false);
       }
     }, 1000);
   }
 
-  // ── Timer display ──────────────────────────────────────────────────────
-  function updateTimerUI() {
-    const el = document.getElementById('timer');
-    el.innerText = `Time left: ${timeLeft}s`;
-    el.style.color = timeLeft <= 10 ? '#ef4444' : '#4ade80';
-  }
-
-  // ── Accept / Decline ───────────────────────────────────────────────────
-  function handleConfirm(accepted) {
+  function handleHudConfirm(accepted) {
     if (responded) return;
     responded = true;
     modalOpen = false;
     clearInterval(timerInterval);
-    document.getElementById('confirmModal').classList.add('hidden');
+    document.getElementById('confirmHud').style.display = 'none';
     submitConfirm(accepted);
   }
 
-  // ── POST to backend ────────────────────────────────────────────────────
   async function submitConfirm(accepted) {
-    const tableId = document.getElementById('modalTableId').value;
-    const betAmount = document.getElementById('betAmount').value;
-
+    const tableId = document.getElementById('hudTableId').value;
     const res = await fetch('/gameConfirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -340,10 +361,9 @@
       body: JSON.stringify({
         tablenum: tableId,
         confirmation: accepted,
-        betAmount: accepted ? betAmount : "0"   // backend requires this field
+        betAmount: "0"
       })
     });
-
     if (res.ok || res.redirected) {
       window.location.href = '/play';
     } else {
