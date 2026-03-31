@@ -1,74 +1,364 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Casino Leaderboard</title>
-<style>
-  body {
-    font-family: 'Arial', sans-serif;
-    background: #0b0b0b;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    padding: 50px;
-  }
-  table {
-    border-collapse: collapse;
-    width: 600px;
-    background: #1c1c1c;
-    box-shadow: 0 0 20px #ffd700;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  th, td {
-    padding: 12px 20px;
-    text-align: left;
-  }
-  th {
-    background: #222;
-    color: #ffd700;
-    font-size: 1.1em;
-  }
-  tr:nth-child(even) {
-    background: #2a2a2a;
-  }
-  tr:hover {
-    background: #333;
-    cursor: pointer;
-  }
-  .rank {
-    font-weight: bold;
-    color: #00a86b;
-  }
-  .credits {
-    color: #ffd700;
-    font-weight: bold;
-  }
-  h1 {
-    text-align: center;
-    color: #ffd700;
-    margin-bottom: 20px;
-    text-shadow: 0 0 5px #00a86b;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard — El Dinero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #f0dc8a;
+      --gold-dark: #a07828;
+      --gold-dim: rgba(201,168,76,0.08);
+      --cream: #f5ead8;
+      --bg: #05100a;
+      --surface: #0a1e10;
+      --surface-2: #0d2415;
+      --border: rgba(201,168,76,0.15);
+      --border-mid: rgba(201,168,76,0.28);
+      --muted: rgba(245,234,216,0.45);
+      --green: #00a86b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Cormorant Garamond', serif;
+      background: var(--bg);
+      color: var(--cream);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-x: hidden;
+    }
+
+    /* Background felt texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 50%, rgba(201,168,76,0.05) 0%, transparent 65%),
+        radial-gradient(ellipse 100% 100% at 50% 0%, rgba(13,36,21,0.8) 0%, var(--bg) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Corner suits */
+    .suit { position: fixed; font-size: 14rem; opacity: 0.03; line-height: 1; pointer-events: none; z-index: 0; }
+    .suit-tl { top: -20px; left: -10px; transform: rotate(-15deg); }
+    .suit-tr { top: -20px; right: -10px; transform: rotate(15deg); }
+    .suit-bl { bottom: -20px; left: -10px; transform: rotate(15deg); }
+    .suit-br { bottom: -20px; right: -10px; transform: rotate(-15deg); }
+
+    /* Page frame */
+    .page-frame {
+      position: fixed;
+      inset: 20px;
+      border: 1px solid var(--border);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .page-frame::before, .page-frame::after {
+      content: '◆';
+      position: absolute;
+      color: var(--gold);
+      font-size: 0.7rem;
+    }
+    .page-frame::before { top: -8px; left: 50%; transform: translateX(-50%); }
+    .page-frame::after  { bottom: -8px; left: 50%; transform: translateX(-50%); }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .header-eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    .header-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #c9a84c 0%, #f0dc8a 40%, #c9a84c 70%, #a07828 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 4s linear 1s infinite;
+      line-height: 1.1;
+    }
+
+    .header-sub {
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border-mid), transparent);
+    }
+    .divider-icon {
+      color: var(--gold);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+    }
+
+    /* Table wrapper */
+    .table-wrapper {
+      position: relative;
+      animation: fadeUp 0.8s ease 0.2s both;
+    }
+
+    /* Glow behind table */
+    .table-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.2), transparent 50%, rgba(201,168,76,0.1));
+      border-radius: 6px;
+      z-index: -1;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: var(--surface);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--border-mid);
+      box-shadow:
+        0 0 60px rgba(201,168,76,0.08),
+        0 20px 60px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(201,168,76,0.1);
+    }
+
+    /* Table head */
+    thead tr {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border-mid);
+    }
+
+    th {
+      font-family: 'Cinzel', serif;
+      font-size: 0.58rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      padding: 18px 24px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    /* Table body */
+    td {
+      padding: 14px 24px;
+      font-size: 1.05rem;
+      font-weight: 400;
+      color: var(--cream);
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tbody tr {
+      transition: background 0.2s ease;
+    }
+    tbody tr:nth-child(even) {
+      background: rgba(255,255,255,0.015);
+    }
+    tbody tr:hover {
+      background: var(--gold-dim);
+      cursor: pointer;
+    }
+    tbody tr:hover td { color: #fff; }
+
+    /* Top 3 special styling */
+    tbody tr:nth-child(1) { background: rgba(201,168,76,0.06); }
+    tbody tr:nth-child(2) { background: rgba(201,168,76,0.03); }
+    tbody tr:nth-child(3) { background: rgba(201,168,76,0.015); }
+
+    /* Rank column */
+    .rank {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      width: 60px;
+    }
+
+    /* Rank medals for top 3 */
+    tbody tr:nth-child(1) .rank { color: #f0dc8a; }
+    tbody tr:nth-child(2) .rank { color: #d0d0d0; }
+    tbody tr:nth-child(3) .rank { color: #cd7f32; }
+    tbody tr:nth-child(n+4) .rank { color: var(--muted); }
+
+    /* Credits column */
+    .credits {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+      color: var(--gold) !important;
+      text-align: right;
+    }
+    tbody tr:nth-child(1) .credits { color: var(--gold-light) !important; }
+
+    /* Team name */
+    .teamname {
+      font-style: italic;
+      font-size: 1.1rem;
+    }
+
+    /* Back link */
+    .back-link {
+      text-align: center;
+      margin-top: 32px;
+      animation: fadeUp 0.8s ease 0.4s both;
+    }
+
+    .back-link a {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-decoration: none;
+      padding: 12px 36px;
+      border: 1px solid var(--border-mid);
+      border-radius: 3px;
+      display: inline-block;
+      transition: all 0.25s;
+    }
+    .back-link a:hover {
+      background: var(--gold-dim);
+      border-color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    /* Game pills */
+    .games-strip {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 36px;
+      animation: fadeUp 0.8s ease 0.5s both;
+    }
+    .game-pill {
+      font-family: 'Cinzel', serif;
+      font-size: 0.52rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+  </style>
 </head>
 <body>
-<div>
-  <h1>Casino Leaderboard</h1>
-  <table>
-    <tr>
-      <th>Rank</th>
-      <th>Team</th>
-      <th>Credits</th>
-    </tr>
-    {% for entry in leaderboard %}
-    <tr>
-      <td class="rank">{{ loop.index }}</td>
-      <td>{{ entry.teamname }}</td>
-      <td class="credits">{{ "{:,}".format(entry.totalCredits) }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-</div>
+
+  <!-- Corner suits -->
+  <div class="suit suit-tl">♠</div>
+  <div class="suit suit-tr">♥</div>
+  <div class="suit suit-bl">♣</div>
+  <div class="suit suit-br">♦</div>
+  <div class="page-frame"></div>
+
+  <div class="container">
+
+    <div class="header">
+      <p class="header-eyebrow">◆ &nbsp; Hall of Champions &nbsp; ◆</p>
+      <h1 class="header-title">Leaderboard</h1>
+      <p class="header-sub">Where fortunes are counted and legends are ranked</p>
+    </div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-icon">◆ ◆ ◆</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Team</th>
+            <th style="text-align:right;">Credits</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in leaderboard %}
+          <tr>
+            <td class="rank">{{ loop.index }}</td>
+            <td class="teamname">{{ entry.teamname }}</td>
+            <td class="credits">{{ "{:,}".format(entry.totalCredits) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="back-link">
+      <a href="/">◂ &nbsp; Return to the Casino</a>
+    </div>
+
+    <div class="games-strip">
+      <span class="game-pill">♠ Teen Patti</span>
+      <span class="game-pill">♥ Poker</span>
+      <span class="game-pill">♣ Blackjack</span>
+      <span class="game-pill">♦ Rummy</span>
+      <span class="game-pill">♠ Crazy 8s</span>
+      <span class="game-pill">♥ 3 of Spades</span>
+    </div>
+
+  </div>
 </body>
 </html>
