@@ -131,7 +131,7 @@ def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
 def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
     queues = {}
     for queue in activeQueue:
-        queues[queue["tableid"]] = {"game": queue["game"], "position": queue["position"], "length": queue["length"]}
+        queues[str(queue["tableid"])] = {"game": queue["game"], "position": queue["position"], "length": queue["length"]}
     return queues
 
 

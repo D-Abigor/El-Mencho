@@ -247,9 +247,9 @@
         const res = await fetch('/gameConfirm');
         const data = await res.json();
         const ready = data.find(q => q.readyToJoin === true);
-        const card = document.querySelector(`.game-card[data-tableid="${ready.tableId}"]`);
-        const gameName = card ? card.dataset.game : `Table ${ready.tableId}`;
         if (ready) {
+          const card = document.querySelector(`.game-card[data-tableid="${ready.tableId}"]`);
+          const gameName = card ? card.dataset.game : `Table ${ready.tableId}`;
           document.getElementById('notifBar').classList.add('visible');
           document.getElementById('modalTitle').textContent = `Table ${ready.tableId} — ${gameName}`;
           document.getElementById('modalSub').textContent = `You've been called up. Place your bet to confirm.`;
