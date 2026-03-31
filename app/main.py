@@ -63,7 +63,7 @@ class enterQueue(BaseModel):
 def _redirect_login():
     return RedirectResponse(url="/login", status_code=303)
 
-def _error_response(request: Request, message: str, status_code: int = 400):
+def error_response(request: Request, message: str, status_code: int = 400):
     return pages.TemplateResponse("error.html", {"request": request, "message": message}, status_code=status_code)
 
 #------------------------ Middleware ----------------------------#
@@ -121,8 +121,6 @@ async def auth_failure_handler(request: Request, exc: AuthenticationFailure):
 @app.exception_handler(TransactionError)
 async def transaction_error_handler(request: Request, exc: TransactionError):
     return pages.TemplateResponse("error.html", {"request": request, "message": exc.message})
-
-print(app.exception_handlers)
 
 #----------------------- GET endpoints — Public --------------------#
 
