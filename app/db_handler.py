@@ -198,7 +198,11 @@ async def getSessionToken(username: str, password: str):
                 raise AuthenticationFailure("Invalid credentials")
         else:
             print("user does not exist")
-            raise DbError("db error - user does not exist")
+            try:
+                raise DbError("db error - user does not exist")
+            except Exception as e:
+                print(f"Exception type: {type(e)}, MRO: {type(e).__mro__}")
+                raise
 
 
 async def deleteSessionToken(session_token: str):
