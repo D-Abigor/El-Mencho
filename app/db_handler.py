@@ -131,7 +131,13 @@ def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
 def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
     queues = {}
     for queue in activeQueue:
-        queues[str(queue["tableid"])] = {"game": queue["game"], "position": queue["position"], "length": queue["length"], "tableid": queue["tableid"]}
+        queues[str(queue["tableid"])] = {
+            "game": queue["game"],
+            "position": queue["position"],
+            "length": queue["length"],
+            "tableid": queue["tableid"]
+            "playing": queue["playing"]
+        }
     return queues
 
 
@@ -332,21 +338,27 @@ async def getUserQueue(session_token: str):
     async with conn_pool.acquire() as conn:
         activeQueues = await conn.fetch(
             """SELECT 
-                t.tableId AS tableid,
-                t.gameSelected AS game,
-                COALESCE(sq.length, 0) AS length,
-                COALESCE(uq.position, -1) AS position
-            FROM tables t
-            LEFT JOIN (
-                SELECT tableId, COUNT(*) AS length
-                FROM queue
-                GROUP BY tableId
-            ) sq ON sq.tableId = t.tableId
-            LEFT JOIN (
-                SELECT tableId, userId,
+                    t.tableId AS tableid,
+                    t.gameSelected AS game,
+                    COALESCE(sq.length, 0) AS length,
+                    COALESCE(uq.position, -1) AS position,
+                    CASE WHEN gp.userId IS NOT NULL THEN true ELSE false END AS playing
+                FROM tables t
+                LEFT JOIN (
+                    SELECT tableId, COUNT(*) AS length
+                    FROM queue
+                    GROUP BY tableId
+                ) sq ON sq.tableId = t.tableId
+                LEFT JOIN (
+                    SELECT tableId, userId,
                     ROW_NUMBER() OVER (PARTITION BY tableId ORDER BY timeOfJoin ASC) AS position
-            FROM queue
-            ) uq ON uq.tableId = t.tableId AND uq.userId = $1;""",uuid
+                FROM queue
+                ) uq ON uq.tableId = t.tableId AND uq.userId = $1
+                LEFT JOIN (
+                SELECT tableId, userId
+                    FROM gameplayers
+                    WHERE userId = $1
+                ) gp ON gp.tableId = t.tableId;""",uuid
         )
     return _cleanUserQueue(activeQueues)
 
