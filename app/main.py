@@ -315,6 +315,8 @@ async def getTableDetails(request: Request, tableId: str):
     return JSONResponse(details)
 
 
+
+
 #-------------------- POST endpoints — Manager -----------------#
 
 @app.post("/table/{tableId}/config")

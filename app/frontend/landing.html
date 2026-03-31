@@ -6,10 +6,14 @@
   <title>The House</title>
   <link rel="stylesheet" href="/static/base.css">
   <style>
-    body { overflow: hidden; }
+    html, body {
+      overflow: hidden;
+      max-width: 100%;
+    }
 
     .hero {
       min-height: 100vh;
+      min-height: 100dvh; /* dynamic viewport height for mobile browsers */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -17,6 +21,8 @@
       text-align: center;
       position: relative;
       padding: 40px;
+      /* Clip anything that bleeds out */
+      overflow: hidden;
     }
 
     /* Radial felt glow */
@@ -30,8 +36,14 @@
       pointer-events: none;
     }
 
-    /* Corner suits */
-    .suit { position: absolute; font-size: 14rem; opacity: 0.04; line-height: 1; }
+    /* Corner suits — clipped inside .hero, scaled down on mobile */
+    .suit {
+      position: absolute;
+      font-size: clamp(5rem, 18vw, 14rem); /* shrinks on small screens */
+      opacity: 0.04;
+      line-height: 1;
+      pointer-events: none;
+    }
     .suit-tl { top: -20px; left: -10px; transform: rotate(-15deg); }
     .suit-tr { top: -20px; right: -10px; transform: rotate(15deg); }
     .suit-bl { bottom: -20px; left: -10px; transform: rotate(15deg); }
@@ -40,7 +52,7 @@
     /* Gold border frame */
     .hero-frame {
       position: absolute;
-      inset: 24px;
+      inset: 16px; /* tighter on mobile */
       border: 1px solid var(--border);
       pointer-events: none;
     }
@@ -96,6 +108,8 @@
     .hero-actions {
       display: flex;
       gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
       animation: fadeUp 0.8s ease 0.3s both;
     }
 
@@ -140,10 +154,13 @@
     .games-strip {
       position: absolute;
       bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      right: 0;
       display: flex;
-      gap: 28px;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 0 24px;
       animation: fadeUp 0.8s ease 0.5s both;
     }
 
