@@ -252,167 +252,104 @@
     </div>
   </div>
 </div>
-  <script>
-    async function joinQueue(tableId, gameName) {
-      const res = await fetch('/play', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tablenum: tableId })
-      });
-      if (res.ok) location.reload();
-    }
+ <script>
+  // ── State ──────────────────────────────────────────────────────────────
+  let timerInterval = null;
+  let timeLeft = 30;
+  let responded = false;
+  let modalOpen = false;
 
-let timerInterval;
-let timeLeft = 30;
-let responded = false;
+  // ── Join queue (button click) ──────────────────────────────────────────
+  async function joinQueue(tableId, gameName) {
+    const res = await fetch('/play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tablenum: tableId })
+    });
+    if (res.ok) location.reload();
+  }
 
+  // ── Poll for dealer call ───────────────────────────────────────────────
+  async function pollQueue() {
+    try {
+      const res = await fetch('/gameConfirm');
+      const data = await res.json();
+      const ready = data.find(q => q.readyToJoin === true);
 
-
-function joinQueue(tableId, gameName) {
-  
-  document.getElementById('modalTableId').value = tableId;
-
-  
-  openConfirmModal();
-}
-
-
-
-function openConfirmModal() {
-  document.getElementById("confirmModal").classList.remove("hidden");
-
-  timeLeft = 30;
-  responded = false;
-
-  document.getElementById("timer").innerText = `Time left: ${timeLeft}s`;
-
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    document.getElementById("timer").innerText = `Time left: ${timeLeft}s`;
-
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-
-      if (!responded) {
-        handleConfirm(false); 
+      if (ready && !modalOpen) {
+        const card = document.querySelector(`.game-card[data-tableid="${ready.tableId}"]`);
+        const gameName = card ? card.dataset.game : `Table ${ready.tableId}`;
+        document.getElementById('notifBar').classList.add('visible');
+        openConfirmModal(ready.tableId, gameName);
       }
-    }
-  }, 1000);
-}
+    } catch (e) {}
+  }
 
+  setInterval(pollQueue, 5000);
+  pollQueue();
 
+  // ── Open modal ─────────────────────────────────────────────────────────
+  function openConfirmModal(tableId, gameName) {
+    modalOpen = true;
+    responded = false;
+    timeLeft = 30;
 
-function handleConfirm(accepted) {
-  if (responded) return;
+    document.getElementById('modalTableId').value = tableId;
+    document.getElementById('modalTitle').textContent = `Table ${tableId} — ${gameName}`;
+    document.getElementById('modalSub').textContent = "You've been called up. Place your bet to confirm.";
+    document.getElementById('confirmModal').classList.remove('hidden');
 
-  responded = true;
-  clearInterval(timerInterval);
-
-  document.getElementById("confirmModal").classList.add("hidden");
-
-  submitConfirm(accepted);
-}
-
-
-
-let timerInterval;
-let timeLeft = 30;
-let responded = false;
-
-
-// OPEN MODAL (USED BY DEALER CALL)
-function openConfirmModal(tableId, gameName) {
- openConfirmModal(ready.tableId, gameName);
-
-  document.getElementById("modalTableId").value = tableId;
-
-  document.getElementById("modalTitle").textContent =
-    `Table ${tableId} — ${gameName}`;
-
-  document.getElementById("modalSub").textContent =
-    "You've been called up. Place your bet to confirm.";
-
-  timeLeft = 30;
-  responded = false;
-
-  updateTimerUI();
-
-  timerInterval = setInterval(() => {
-    timeLeft--;
     updateTimerUI();
 
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      if (!responded) handleConfirm(false); // AUTO EXPIRE
-    }
-  }, 1000);
-}
-
-
-// TIMER UI UPDATE
-function updateTimerUI() {
-  const timerEl = document.getElementById("timer");
-  timerEl.innerText = `Time left: ${timeLeft}s`;
-
-  if (timeLeft <= 10) {
-    timerEl.style.color = "#ef4444"; // red warning
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      updateTimerUI();
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        if (!responded) handleConfirm(false);   // auto-expire → decline
+      }
+    }, 1000);
   }
-}
 
-
-// ACCEPT / DECLINE / TIMEOUT
-function handleConfirm(accepted) {
-  if (responded) return;
-
-  responded = true;
-  clearInterval(timerInterval);
-
-  document.getElementById("confirmModal").classList.remove("open");
-
-  submitConfirm(accepted);
-}
-
-
-// BACKEND CALL
-async function submitConfirm(accepted) {
-  const tableId = document.getElementById('modalTableId').value;
-
-  const res = await fetch('/gameConfirm', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      tablenum: tableId,
-      confirmation: accepted
-    })
-  });
-
-  if (res.ok || res.redirected) {
-    window.location.href = '/play';
-  } else {
-    alert("Something went wrong");
+  // ── Timer display ──────────────────────────────────────────────────────
+  function updateTimerUI() {
+    const el = document.getElementById('timer');
+    el.innerText = `Time left: ${timeLeft}s`;
+    el.style.color = timeLeft <= 10 ? '#ef4444' : '#4ade80';
   }
-}
-   async function pollQueue() {
-  try {
-    const res = await fetch('/gameConfirm');
-    const data = await res.json();
 
-    const ready = data.find(q => q.readyToJoin === true);
+  // ── Accept / Decline ───────────────────────────────────────────────────
+  function handleConfirm(accepted) {
+    if (responded) return;
+    responded = true;
+    modalOpen = false;
+    clearInterval(timerInterval);
+    document.getElementById('confirmModal').classList.add('hidden');
+    submitConfirm(accepted);
+  }
 
-    if (ready) {
-      const card = document.querySelector(`.game-card[data-tableid="${ready.tableId}"]`);
-      const gameName = card ? card.dataset.game : `Table ${ready.tableId}`;
+  // ── POST to backend ────────────────────────────────────────────────────
+  async function submitConfirm(accepted) {
+    const tableId = document.getElementById('modalTableId').value;
+    const betAmount = document.getElementById('betAmount').value;
 
-      document.getElementById('notifBar').classList.add('visible');
+    const res = await fetch('/gameConfirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        tablenum: tableId,
+        confirmation: accepted,
+        betAmount: accepted ? betAmount : "0"   // backend requires this field
+      })
+    });
 
-      openConfirmModal(ready.tableId, gameName);
+    if (res.ok || res.redirected) {
+      window.location.href = '/play';
+    } else {
+      alert("Something went wrong");
     }
-  } catch(e) {}
-}
-
-    setInterval(pollQueue, 5000);
-    pollQueue();
-  </script>
+  }
+</script>
 </body>
 </html>
