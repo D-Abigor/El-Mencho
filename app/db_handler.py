@@ -131,7 +131,7 @@ def _convertActivePlayers(activePlayers: list[asyncpg.Record]):
 def _cleanUserQueue(activeQueue: list[asyncpg.Record]):
     queues = {}
     for queue in activeQueue:
-        queues[str(queue["tableid"])] = {"game": queue["game"], "position": queue["position"], "length": queue["length"]}
+        queues[str(queue["tableid"])] = {"game": queue["game"], "position": queue["position"], "length": queue["length"], "tableid": queue["tableid"]}
     return queues
 
 
@@ -343,11 +343,10 @@ async def getUserQueue(session_token: str):
                 GROUP BY tableId
             ) sq ON sq.tableId = t.tableId
             LEFT JOIN (
-                SELECT tableId,
-           ROW_NUMBER() OVER (PARTITION BY tableId ORDER BY timeOfJoin ASC) AS position
+                SELECT tableId, userId,
+                    ROW_NUMBER() OVER (PARTITION BY tableId ORDER BY timeOfJoin ASC) AS position
             FROM queue
-            WHERE userId = $1
-            ) uq ON uq.tableId = t.tableId;""",uuid
+            ) uq ON uq.tableId = t.tableId AND uq.userId = $1;""",uuid
         )
     return _cleanUserQueue(activeQueues)
 

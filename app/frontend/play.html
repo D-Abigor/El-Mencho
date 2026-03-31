@@ -6,6 +6,14 @@
   <title>Play — The House</title>
   <link rel="stylesheet" href="/static/base.css">
   <style>
+    .table-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      margin-top: -10px;
+    }
     .games-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -176,7 +184,7 @@
       <div class="game-card animate-in stagger-{{ i }}" data-game="{{ gamename }}" data-tableid="{{ i }}">
         <span class="bg-suit">{{ suits[i-1] }}</span>
         <p class="game-name">{{ gamename }}</p>
-
+        <p class="table-label">Table {{ q.get('tableid', i) }}</p>
           <div class="queue-status">
             {% if pos == -1 %}
             <span class="queue-dot dot-muted"></span>
