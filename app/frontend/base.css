@@ -43,17 +43,23 @@ body {
 
 /* ---- Nav ---- */
 nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
-  height: 64px;
   border-bottom: 1px solid var(--border);
   background: rgba(10,20,14,0.85);
   backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 100;
+  display: flex;
+  flex-direction: column;   /* changed: was a single-row flex, now column so second row can appear */
+  padding: 0 40px;          /* keep your original padding */
+}
+
+.nav-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;             /* original nav height moves here */
+  width: 100%;
 }
 
 .nav-brand {
@@ -81,7 +87,53 @@ nav {
   text-decoration: none;
   transition: color 0.2s;
 }
+
 .nav-links a:hover { color: var(--gold); }
+
+/* Second row — hidden on desktop, shown on mobile */
+.nav-bottom {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  border-top: 1px solid var(--border);
+}
+
+.nav-bottom li {
+  flex: 1;
+}
+
+.nav-bottom li a {
+  display: block;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 11px 4px;
+  border-right: 1px solid var(--border);
+  transition: color 0.2s;
+}
+
+.nav-bottom li:last-child a { border-right: none; }
+.nav-bottom li a:hover { color: var(--gold); }
+
+@media (max-width: 600px) {
+  nav {
+    padding: 0 20px;        /* tighten side padding on small screens */
+  }
+
+  .nav-top .nav-links {
+    display: none;          /* hide inline links — they move to the bottom strip */
+  }
+
+  .nav-bottom {
+    display: flex;          /* show the second row */
+  }
+}
 
 /* ---- Page shell ---- */
 .page {
