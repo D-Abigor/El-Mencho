@@ -728,7 +728,6 @@ async def endGame(result: dict, tablenum: str):
                         raise KeyError(f"Player '{username}' not found in result dict. result keys: {list(result.keys())}")
 
                     final_amount = result[username]
-                    change = final_amount - initial
                     balance_updates.append((final_amount, user_id))
                     logs.append((game_id, user_id, initial, final_amount))
 
