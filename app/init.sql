@@ -4,7 +4,7 @@ CREATE TABLE users(
     password_hash TEXT NOT NULL,
     isleader BOOL DEFAULT FALSE,
     affiliation TEXT NOT NULL,
-    access TEXT NOT NULL CHECK (access IN ('player', 'manager'))
+    access TEXT NOT NULL CHECK (access IN ('player', 'manager', 'minigamemanager'))
 );
 
 CREATE TABLE sessions(

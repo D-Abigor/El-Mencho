@@ -760,3 +760,35 @@ async def endGame(result: dict, tablenum: str):
         except Exception as e:
             raise DbError(str(e)) from e
     return {"status": "ok"}
+
+
+
+#---------------- helping functions for get endpoints for minigame manager ----------#
+
+async def getAllPlayers():
+    async with conn_pool.acquire() as conn:
+        players = await conn.fetch("""
+        SELECT username FROM users WHERE access = 'player';""")
+        if players:
+            return [player['username'] for player in players]
+        else:
+            raise DbError("could not get all player usernames")
+
+
+async def deductFromUser(username,amount):
+    async with conn_pool.acquire() as conn:
+        status = await conn.execute("""
+        UPDATE accounts SET balance = balance - $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2""", int(amount), username)
+        if status.endswith("1"):
+            return {"status": "ok"}
+        else:
+            raise TransactionError(f"could not deduct {amount} from {username}")
+
+async def addToUser(username, amount):
+    async with conn_pool.acquire() as conn:
+        status = await conn.execute("""
+        UPDATE accounts SET balance = balance + $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2""", int(amount), username)
+        if status.endswith("1"):
+            return {"status": "ok"}
+        else:
+            raise TransactionError(f"could not add {amount} to {username}")

@@ -337,3 +337,32 @@ async def startGame(request: Request, tableId: str):
 async def endGame(request: Request, tableId: str, result: gameResults):
     status = await db.endGame(result=result.results, tablenum=tableId)
     return JSONResponse(status)
+
+
+#-------------------- GET endpoint for minigame manager -------------#
+
+@app.get("/players")
+async def getPlayers(request: Request):
+    try:
+        players = await db.getAllPlayers()
+    except DbError as e:
+        error_response(request,e.message)
+    return JSONResponse(players)
+
+
+#-------------------- POST endpoint for minigame manager --------------#
+
+@app.post("/player/{username}/deduct")
+async def deduct(request: Request, amount: str):
+    try:
+        status = db.deductFromUser(username = username, amount = amount)
+    except TransactionError as e:
+        error_response(request, e.message)
+
+@app.post("/player/{username}/add")
+async def add(request: Request, amount: str):
+    try:
+        status = db.addToUser(username = username, amount= amount)
+    except TransactionError as e:
+        error_response(request, e.message)
+    
