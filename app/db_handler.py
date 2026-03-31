@@ -373,11 +373,11 @@ async def insertIntoQueue(session_token: str, tablenum: str):
     userId = await _uuidFromSession(session_token)
     async with conn_pool.acquire() as conn:
         status = await conn.fetchrow("""SELECT tableid FROM queue WHERE userid = $1 AND tableid = $2
-                                        UNION
-                                        SELECT tableid FROM activePlayers WHERE userid = $1 AND tableid = $2;""", 
-                                        userId, tablenum)
+            UNION
+            SELECT tableid FROM activePlayers WHERE userid = $1;""",  # changed tableId dependency, so now if player is on active status for any table they wont be inserted into queue
+            userId, tablenum)
         if status:
-            return {"status": "already in queue"}
+            return {"status": "already in queue or active in a game"}
         else:
             await conn.execute("""INSERT INTO queue (tableId, userId) VALUES ($1, $2);""",
             tablenum, userId
@@ -494,23 +494,26 @@ async def getManagerHome(tableId: str):
 
 
 async def confirmPlayers(tablenum: str):
-    # mark top N players readyToJoin based on table's max_players setting
+    # updated confirm players to consider players already seated, 
+    # new logic -> slots left(how many to pick) = max_players - playersinqreadytojoin - playersalreadyseated
     async with conn_pool.acquire() as conn:
         await conn.execute(
             """UPDATE queue q
-                SET readyToJoin = TRUE
+                SET readytojoin = TRUE
                 WHERE q.number IN (
-                    SELECT sub.number
-                    FROM (
-                        SELECT q2.number,
-                        ROW_NUMBER() OVER (ORDER BY q2.timeOfJoin ASC) as rn,
-                        t.max_players
-                    FROM queue q2
-                    JOIN tables t ON q2.tableId = t.tableId
-                    WHERE q2.tableId = $1
-                    AND q2.readyToJoin = FALSE
-                    ) sub
-                    WHERE sub.rn <= sub.max_players);""",tablenum
+            SELECT q2.number
+            FROM queue q2
+            JOIN tables t ON q2.tableid = t.tableid
+            WHERE q2.tableid = $1
+                AND q2.readytojoin = FALSE
+            ORDER BY q2.timeofjoin ASC
+            LIMIT (
+                SELECT GREATEST(0, t2.max_players - COUNT(DISTINCT q3.userid) - COUNT(DISTINCT ap.userid))
+                FROM tables t2
+                LEFT JOIN queue q3 ON q3.tableid = t2.tableid AND q3.readytojoin = TRUE
+                LEFT JOIN activeplayers ap ON ap.tableid = t2.tableid
+                WHERE t2.tableid = $1)
+            );""",tablenum
         )
 
 

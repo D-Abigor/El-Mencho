@@ -237,7 +237,7 @@ async def confirmParticipation(request: Request, participation: participationCon
         session_token=session_token,
         tablenum=participation.tablenum,
         confirmation=participation.confirmation,
-        betAmount=participation.betAmount
+        betAmount="350"
     )
     return RedirectResponse(url="/play", status_code=303)
 

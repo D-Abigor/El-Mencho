@@ -55,7 +55,7 @@ INSERT INTO users(username,password_hash,isleader,affiliation,access) VALUES
 CREATE TABLE activeplayers(
     userid uuid PRIMARY KEY,
     tableid TEXT NOT NULL,
-    betamount INT NOT NULL,
+    betamount INT NOT NULL CHECK ( betamount = 350),
     timeofjoin TIMESTAMP DEFAULT now(),
     CONSTRAINT activeplayers_tableid_fkey FOREIGN KEY (tableid) REFERENCES tables(tableid),
     CONSTRAINT activeplayers_userid_fkey FOREIGN KEY (userid) REFERENCES users(id)
