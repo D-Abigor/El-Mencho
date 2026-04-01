@@ -787,7 +787,7 @@ async def deductFromUser(username,amount):
         await conn.execute("""
         INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);
         """, amount, sourceid["id"], _parse_uuid('91b0e16f-5e8e-42c6-b0bf-4030981aa035'))
-        if status.endswith("1"):
+        if sourceid["id"]:
             return {"status": "ok"}
         else:
             raise TransactionError(f"could not deduct {amount} from {username}")
@@ -799,7 +799,7 @@ async def addToUser(username, amount):
         await conn.execute("""
         INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);
         """, amount,_parse_uuid('91b0e16f-5e8e-42c6-b0bf-4030981aa035'), destid["id"] )
-        if status.endswith("1"):
+        if destid["id"]:
             return {"status": "ok"}
         else:
             raise TransactionError(f"could not add {amount} to {username}")
