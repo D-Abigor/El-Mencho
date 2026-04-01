@@ -354,7 +354,7 @@ async def endGame(request: Request, tableId: str, result: gameResults):
 
 #-------------------- GET endpoint for minigame manager -------------#
 
-@app.get("/players/all")
+@app.get("/players/")
 async def getPlayers(request: Request):
     try:
         players = await db.getAllPlayers()
