@@ -382,7 +382,7 @@ async def getAddPage(request: Request, username: str):
 @app.post("/player/{username}/deduct")
 async def deduct(request: Request, username: str, amount: amountBody):
     try:
-        status = await db.deductFromUser(username = username, amount = amount)
+        status = await db.deductFromUser(username = username, amount = amount.amount)
     except TransactionError as e:
         return JSONResponse({"error": e.message}, status_code=400)
     return JSONResponse({"status": "ok"})
@@ -390,7 +390,7 @@ async def deduct(request: Request, username: str, amount: amountBody):
 @app.post("/player/{username}/add")
 async def add(request: Request, username: str, amount: amountBody):
     try:
-        status = await db.addToUser(username = username, amount= amount)
+        status = await db.addToUser(username = username, amount= amount.amount)
     except TransactionError as e:
         return JSONResponse({"error": e.message}, status_code=400)
     return JSONResponse({"status": "ok"})
