@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Players — El-Dinero</title>
+<link rel="stylesheet" href="/static/base.css">
+<style>
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 60px 20px;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 48px;
+  animation: fadeUp 0.4s ease both;
+}
+
+.page-suit {
+  font-size: 2.4rem;
+  color: var(--gold, #c9a84c);
+  opacity: 0.7;
+  display: block;
+  margin-bottom: 14px;
+}
+
+.page-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cream, #f5f0e8);
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--muted, #8a8070);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.players-wrap {
+  width: 100%;
+  max-width: 560px;
+  animation: fadeUp 0.5s ease 0.1s both;
+}
+
+.players-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(201,168,76,0.18);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.players-table thead tr {
+  background: rgba(201,168,76,0.08);
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+}
+
+.players-table th {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gold, #c9a84c);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 14px 24px;
+  text-align: left;
+}
+
+.players-table th.col-actions {
+  text-align: right;
+}
+
+.players-table td {
+  padding: 14px 24px;
+  color: var(--cream, #f5f0e8);
+  font-size: 0.95rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  vertical-align: middle;
+}
+
+.players-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.players-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.players-table tbody tr:hover {
+  background: rgba(201,168,76,0.05);
+}
+
+.player-index {
+  color: var(--muted, #8a8070);
+  font-size: 0.8rem;
+  font-family: 'Cinzel', serif;
+  width: 40px;
+}
+
+.player-name {
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.player-pip {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold, #c9a84c);
+  opacity: 0.5;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.row-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.btn-add {
+  display: inline-block;
+  padding: 5px 14px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 3px;
+  margin-left: 8px;
+  transition: background 0.15s, border-color 0.15s;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.35);
+  color: var(--gold, #c9a84c);
+}
+
+.btn-add:hover {
+  background: rgba(201,168,76,0.22);
+  border-color: rgba(201,168,76,0.65);
+}
+
+.btn-deduct {
+  display: inline-block;
+  padding: 5px 14px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 3px;
+  margin-left: 8px;
+  transition: background 0.15s, border-color 0.15s;
+  background: rgba(139,26,26,0.2);
+  border: 1px solid rgba(192,57,43,0.35);
+  color: #c0392b;
+}
+
+.btn-deduct:hover {
+  background: rgba(192,57,43,0.3);
+  border-color: rgba(192,57,43,0.65);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--muted, #8a8070);
+  font-style: italic;
+}
+
+.actions {
+  margin-top: 32px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  animation: fadeUp 0.5s ease 0.2s both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-suit">♠</span>
+  <h1 class="page-title">Active Players</h1>
+  <p class="page-subtitle">All registered players at the table</p>
+</div>
+
+<div class="players-wrap">
+  <table class="players-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th class="col-actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i, player in players | enumerate(start=1) %}
+      <tr>
+        <td class="player-index">{{ i }}</td>
+        <td class="player-name"><span class="player-pip"></span>{{ player }}</td>
+        <td class="row-actions">
+          <a href="/player/{{ player }}/add" class="btn-add">+ Add</a>
+          <a href="/player/{{ player }}/deduct" class="btn-deduct">− Deduct</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="3" class="empty-state">No players at the table.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="actions">
+  <a href="/players" class="btn btn-gold">Dashboard</a>
+  <a href="/" class="btn btn-outline">Lobby</a>
+</div>
+
+</body>
+</html>

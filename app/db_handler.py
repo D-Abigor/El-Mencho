@@ -781,7 +781,7 @@ async def getAllPlayers():
 async def deductFromUser(username,amount):
     async with conn_pool.acquire() as conn:
         status = await conn.execute("""
-        UPDATE accounts SET balance = balance - $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2""", int(amount), username)
+        UPDATE accounts SET balance = balance - $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2""", amount, username)
         if status.endswith("1"):
             return {"status": "ok"}
         else:
@@ -790,7 +790,7 @@ async def deductFromUser(username,amount):
 async def addToUser(username, amount):
     async with conn_pool.acquire() as conn:
         status = await conn.execute("""
-        UPDATE accounts SET balance = balance + $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2""", int(amount), username)
+        UPDATE accounts SET balance = balance + $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2""", amount, username)
         if status.endswith("1"):
             return {"status": "ok"}
         else:

@@ -56,6 +56,9 @@ class tableNum(BaseModel):
 class enterQueue(BaseModel):
     tablenum: str
 
+class amountBody(BaseModel):
+    amount: int
+
 
 #------------------ Internal helper ---------------------------#
 
@@ -351,30 +354,44 @@ async def endGame(request: Request, tableId: str, result: gameResults):
 
 #-------------------- GET endpoint for minigame manager -------------#
 
-@app.get("/players")
+@app.get("/players/all")
 async def getPlayers(request: Request):
     try:
         players = await db.getAllPlayers()
     except DbError as e:
         return error_response(request,e.message)
-    return JSONResponse(players)
+    return pages.TemplateResponse("players.html", {"request": request, "players":players})
 
+@app.get("/player/{username}")
+async def playerProfile(request: Request, username: str):
+    return pages.TemplateResponse(
+        "player.html",
+        {"request": request, "username": username},
+    )
+ 
+@app.get("/player/{username}/deduct")
+async def getDeductPage(request: Request, username: str, amount: str):
+    return pages.TemplateResponse("deduct.html", {"request": request})
+
+@app.get("/player/{username}/deduct")
+async def getAddPage(request: Request, username: str, amount: str):
+    return pages.TemplateResponse("add.html", {"request": request})
 
 #-------------------- POST endpoint for minigame manager --------------#
 
 @app.post("/player/{username}/deduct")
-async def deduct(request: Request, username: str, amount: str):
+async def deduct(request: Request, username: str, amount: amountBody):
     try:
         status = await db.deductFromUser(username = username, amount = amount)
     except TransactionError as e:
-        return error_response(request, e.message)
-    return JSONResponse(status)
+        return JSONResponse({"error": e.message}, status_code=400)
+    return JSONResponse({"status": "ok"})
 
 @app.post("/player/{username}/add")
-async def add(request: Request, username: str, amount: str):
+async def add(request: Request, username: str, amount: amountBody):
     try:
         status = await db.addToUser(username = username, amount= amount)
     except TransactionError as e:
-        return error_response(request, e.message)
-    return JSONResponse(status)
+        return JSONResponse({"error": e.message}, status_code=400)
+    return JSONResponse({"status": "ok"})
     

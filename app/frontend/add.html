@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Funds — The House</title>
+<link rel="stylesheet" href="/static/base.css">
+<style>
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.card-wrap {
+  width: 100%;
+  max-width: 440px;
+  animation: fadeUp 0.5s ease both;
+}
+
+.card-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.card-suit {
+  font-size: 2.8rem;
+  color: var(--gold, #c9a84c);
+  opacity: 0.7;
+  display: block;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--cream, #f5f0e8);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.card-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted, #8a8070);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.form-panel {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 4px;
+  padding: 32px 28px;
+}
+
+.field {
+  margin-bottom: 22px;
+}
+
+.field label {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted, #8a8070);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.field input {
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 3px;
+  padding: 11px 14px;
+  color: var(--cream, #f5f0e8);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.field input:focus {
+  border-color: rgba(201,168,76,0.5);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+
+.field input::placeholder {
+  color: rgba(138,128,112,0.5);
+}
+
+.amount-hint {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--muted, #8a8070);
+  font-style: italic;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 24px 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-gold-submit {
+  flex: 1;
+  text-align: center;
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.45);
+  color: var(--gold, #c9a84c);
+  padding: 12px 20px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s;
+}
+
+.btn-gold-submit:hover:not(:disabled) {
+  background: rgba(201,168,76,0.25);
+  border-color: rgba(201,168,76,0.7);
+}
+
+.btn-gold-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inline feedback */
+.feedback {
+  display: none;
+  margin-top: 20px;
+  padding: 14px 18px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  animation: fadeUp 0.3s ease both;
+}
+
+.feedback.error {
+  display: block;
+  background: rgba(139,26,26,0.12);
+  border: 1px solid rgba(192,57,43,0.3);
+  color: #e07070;
+}
+
+.feedback.success {
+  display: block;
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.25);
+  color: var(--gold, #c9a84c);
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.82rem;
+  color: var(--muted, #8a8070);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--cream, #f5f0e8);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div class="card-wrap">
+  <div class="card-header">
+    <span class="card-suit">♦</span>
+    <h1 class="card-title">Add Funds</h1>
+    <p class="card-subtitle">Top up a player's balance</p>
+  </div>
+
+  <div class="form-panel">
+    <div class="field">
+      <label for="amount">Amount</label>
+      <input
+        type="number"
+        id="amount"
+        placeholder="0"
+        min="1"
+        required
+      />
+      <p class="amount-hint">Whole numbers only. Funds are credited immediately.</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-actions">
+      <button class="btn-gold-submit" id="submitBtn" onclick="handleSubmit()">Credit Balance</button>
+      <a href="/player/{{ username }}" class="btn btn-outline">Cancel</a>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <a href="/players" class="back-link">← View all players</a>
+</div>
+
+<script>
+  async function handleSubmit() {
+    const amount = parseInt(document.getElementById('amount').value);
+    const feedback = document.getElementById('feedback');
+    const btn = document.getElementById('submitBtn');
+
+    feedback.className = 'feedback';
+    feedback.textContent = '';
+
+    if (!amount || amount < 1) {
+      feedback.className = 'feedback error';
+      feedback.textContent = 'Please enter a valid amount.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Processing…';
+
+    try {
+      const res = await fetch('/player/{{ username }}/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        feedback.className = 'feedback error';
+        feedback.textContent = data.error || 'Something went wrong.';
+      } else {
+        feedback.className = 'feedback success';
+        feedback.textContent = `${amount} successfully added to {{ username }}.`;
+        document.getElementById('amount').value = '';
+      }
+    } catch (err) {
+      feedback.className = 'feedback error';
+      feedback.textContent = 'Could not reach the server. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Credit Balance';
+    }
+  }
+</script>
+
+</body>
+</html>
