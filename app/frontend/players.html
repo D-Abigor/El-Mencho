@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Players — El-Dinero</title>
+<title>Players — The House</title>
 <link rel="stylesheet" href="/static/base.css">
 <style>
 body {
@@ -208,9 +208,9 @@ body {
       </tr>
     </thead>
     <tbody>
-      {% for i, player in players | enumerate(start=1) %}
+      {% for player in players %}
       <tr>
-        <td class="player-index">{{ i }}</td>
+        <td class="player-index">{{ loop.index }}</td>
         <td class="player-name"><span class="player-pip"></span>{{ player }}</td>
         <td class="row-actions">
           <a href="/player/{{ player }}/add" class="btn-add">+ Add</a>
@@ -227,7 +227,7 @@ body {
 </div>
 
 <div class="actions">
-  <a href="/players" class="btn btn-gold">Dashboard</a>
+  <a href="/home" class="btn btn-gold">Dashboard</a>
   <a href="/" class="btn btn-outline">Lobby</a>
 </div>
 
