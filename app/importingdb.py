@@ -15,10 +15,13 @@ Set your DB connection string in the DATABASE_URL variable below.
 import json
 import uuid
 import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────────────
-JSON_FILE = "test1_teams.json"
-DATABASE_URL = "postgresql://USER:PASSWORD@HOST:5432/DBNAME"
+JSON_FILE = "teams.json"
+DATABASE_URL = f"postgresql://{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@127.0.0.1:5432/{os.getenv("POSTGRES_DB")}"
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Score thresholds & leader bonuses ────────────────────────────────────────
