@@ -160,6 +160,7 @@ async def get_user_landing(request: Request):
         "userhome.html",
         {
             "request": request,
+            "username": response["username"]
             "teamname": response["teamname"],
             "usercredits": response["usercredits"],
             "teamcredits": response["teamcredits"],

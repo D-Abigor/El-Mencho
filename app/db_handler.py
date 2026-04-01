@@ -292,6 +292,7 @@ async def getPlayerHome(session_token: str):
 
         userAndTeam = await conn.fetchrow(
             """SELECT
+                u.username AS username
                 u.affiliation AS teamname,
                 a.balance AS userCredits,
                 SUM(a2.balance) OVER (PARTITION BY u.affiliation) AS teamCredits
@@ -326,6 +327,7 @@ async def getPlayerHome(session_token: str):
         )
 
     return {
+        "username": userAndTeam["username"],
         "teamname": userAndTeam["teamname"],
         "usercredits": userAndTeam["usercredits"],
         "teamcredits": userAndTeam["teamcredits"],
