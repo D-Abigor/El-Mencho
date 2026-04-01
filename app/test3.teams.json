@@ -1,0 +1,1058 @@
+[{
+  "_id": {
+    "$oid": "69c7e5b1c149d68f6cca4ead"
+  },
+  "teamId": "TEAM 2",
+  "players": [
+    {
+      "playerId": "TEAM 2-P1",
+      "password": "$2b$10$WEnZN.W7s4j9j6CG/My7wenoXrsPZF1SXPgyOlsbFsKMfr4XHCFw2",
+      "name": "s",
+      "email": "r",
+      "phone": "123",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69c7e5b1c149d68f6cca4eae"
+      }
+    },
+    {
+      "playerId": "TEAM 2-P2",
+      "password": "$2b$10$Yl6nbleVCuC7PdFSWJDdX.DFR/sv2F1obmrhFuBQlkW9.9lYKOR4G",
+      "name": "d",
+      "email": "g",
+      "phone": "234",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69c7e5b1c149d68f6cca4eaf"
+      }
+    },
+    {
+      "playerId": "TEAM 2-P3",
+      "password": "$2b$10$UTdRgC.OHb9i4QZinMfbf.vFlz8pyyk0fnkVlA8Sf0gRPvK0CLQku",
+      "name": "h",
+      "email": "j",
+      "phone": "345",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69c7e5b1c149d68f6cca4eb0"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cc18fdb7068ab18d3dae3b"
+  },
+  "teamId": "NotXtasy",
+  "players": [
+    {
+      "playerId": "NotXtasy-P1",
+      "password": "$2b$10$7KMUz0v4kKC6HKQnzyalmOuRpVigrCRSWgKl7TbTg1wCmlISbnUre",
+      "name": "Agrim Mittal",
+      "email": ".@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc18fdb7068ab18d3dae3c"
+      }
+    },
+    {
+      "playerId": "NotXtasy-P2",
+      "password": "$2b$10$o5ABjWZQHEW8GMvrKjGU.Ot1JbBq5JnAsRfx0FL/MXPpgjdlxh7Gq",
+      "name": "Lakshay Sachdeva",
+      "email": ".@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc18fdb7068ab18d3dae3d"
+      }
+    },
+    {
+      "playerId": "NotXtasy-P3",
+      "password": "$2b$10$NvmLq32f1xM336NdpNPFIOaVsSBKndO2rU.7OZHz92O6y67j2sgN2",
+      "name": "Shriyam Bharadwaj",
+      "email": ".@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc18fdb7068ab18d3dae3e"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cc384d45d1c476da03e9db"
+  },
+  "teamId": "Haldiram",
+  "players": [
+    {
+      "playerId": "Haldiram-P1",
+      "password": "$2b$10$QVrtNjaQgoiOwZV/TgZU4eq2GC2xCHsxN9DzgfKSu8pgsQVPqVgeK",
+      "name": "Varnit",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc384d45d1c476da03e9dc"
+      }
+    },
+    {
+      "playerId": "Haldiram-P2",
+      "password": "$2b$10$qDvzPRxf60ICfOfuWKcL9.XU2SaFhwzDbdyj0WznYNRIzflQ7Enj6",
+      "name": "Parth",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc384d45d1c476da03e9dd"
+      }
+    },
+    {
+      "playerId": "Haldiram-P3",
+      "password": "$2b$10$JRym7ae.JL2k2Lzp9p9cguYoGEvt533vLc42ysOGCQWrzidEdg3gS",
+      "name": "Sarthak",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc384d45d1c476da03e9de"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cc3a8045d1c476da03ea0a"
+  },
+  "teamId": "Vailly",
+  "players": [
+    {
+      "playerId": "Vailly-P1",
+      "password": "$2b$10$66v3uRNMNQzjtor1P4l2.eUS5xKRm3dYQAj6pqn4ppTb8h8HMBFi2",
+      "name": "Gursehej",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3a8045d1c476da03ea0b"
+      }
+    },
+    {
+      "playerId": "Vailly-P2",
+      "password": "$2b$10$RGSZE7u7v4gULodGdxi1Uu9lD.9yhIVeYwEMWur39mhfMw4WsRsKK",
+      "name": "tanish",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3a8045d1c476da03ea0c"
+      }
+    },
+    {
+      "playerId": "Vailly-P3",
+      "password": "$2b$10$UTaCz5yJzQqLHKg3UTyPm.211uUNY8hCtiyU.JfszEdgHc5hcb1b6",
+      "name": "yash",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3a8045d1c476da03ea0d"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cc3acc45d1c476da03ea2a"
+  },
+  "teamId": "Python",
+  "players": [
+    {
+      "playerId": "Python-P1",
+      "password": "$2b$10$1HKq0fsb6wi.RX1DxH8S3.z6uOdUkZF7aZylzi8uC55Pd1iz6Rl0i",
+      "name": "Chirag",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3acc45d1c476da03ea2b"
+      }
+    },
+    {
+      "playerId": "Python-P2",
+      "password": "$2b$10$YRF/631p/QpoR7Fru1fWPu/05/973AXgJO82iYAhQCfsPw8ciN3ky",
+      "name": "Anirudh",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3acc45d1c476da03ea2c"
+      }
+    },
+    {
+      "playerId": "Python-P3",
+      "password": "$2b$10$jyjuuZD2DWD.AWF9FZRCwOFKuEnOg00DBahDZcGY0sJgEq6hnl7CG",
+      "name": "tanay",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3acc45d1c476da03ea2d"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cc3b2145d1c476da03ea50"
+  },
+  "teamId": "Diet Coke",
+  "players": [
+    {
+      "playerId": "Diet Coke-P1",
+      "password": "$2b$10$lM1dS3rh2wDgDf4QfwgSUO1rq/bhc4qSM9LE0D9uFplfkfX6mqXrm",
+      "name": "arnav",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3b2145d1c476da03ea51"
+      }
+    },
+    {
+      "playerId": "Diet Coke-P2",
+      "password": "$2b$10$KRFXSKYR3VzwdiZoDm7cHe8Qefa7KaywB7vncZu4povlrgYBq8deu",
+      "name": "Khushi",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3b2145d1c476da03ea52"
+      }
+    },
+    {
+      "playerId": "Diet Coke-P3",
+      "password": "$2b$10$AJijQN8bE46YBUWuwq.aO.e3r3twEEngmOonSwR4VOJXU2PoWrcwC",
+      "name": "Manwith",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc3b2145d1c476da03ea53"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cc4602a4a8463f04df5486"
+  },
+  "teamId": "LAUDASAUR",
+  "players": [
+    {
+      "playerId": "LAUDASAUR-P1",
+      "password": "$2b$10$Fj3JcVLOLDt0b12lFyzWku8JOuLNrbAw9vweyUj3.lwUQ4pgxTEG.",
+      "name": "chaitanya",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc4602a4a8463f04df5487"
+      }
+    },
+    {
+      "playerId": "LAUDASAUR-P2",
+      "password": "$2b$10$4z9lhiXoGqqWlVr3Afs40.u1l0DFBLeWlP8km9bxrMvlC/mkFXLU2",
+      "name": "jayat",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc4602a4a8463f04df5488"
+      }
+    },
+    {
+      "playerId": "LAUDASAUR-P3",
+      "password": "$2b$10$CG9j56j43BvTCB1JORKRy.4q.9UuYVaZxi6L8o76VgZ8UmIjxb/im",
+      "name": "pragun",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cc4602a4a8463f04df5489"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccb82a83a4fe4515c6448"
+  },
+  "teamId": "Bhabhi Ji",
+  "players": [
+    {
+      "playerId": "Bhabhi Ji-P1",
+      "password": "$2b$10$NqGvI0orZta9dHdPIWAwIOHL7tf9QZlvlgDlZEuBKK6kqECVEy.ru",
+      "name": "Vansh Aggarwal ",
+      "email": ".",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccb82a83a4fe4515c6449"
+      }
+    },
+    {
+      "playerId": "Bhabhi Ji-P2",
+      "password": "$2b$10$rDtfJoDDNwDa9g6.jmo07uP9dqiDOXszbbUcSYTQnP28wQtLuJRTG",
+      "name": "Arnav Aggarwal ",
+      "email": ".",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccb82a83a4fe4515c644a"
+      }
+    },
+    {
+      "playerId": "Bhabhi Ji-P3",
+      "password": "$2b$10$T2E9fGLLr6ECZxZPDYVJSuzLB2gtfxYtNHc0APM25xNbVTJFHXtd6",
+      "name": "Krishna Saini",
+      "email": ".",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccb82a83a4fe4515c644b"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69ccccd5a83a4fe4515c6521"
+  },
+  "teamId": "Diggers in Paris",
+  "players": [
+    {
+      "playerId": "Diggers in Paris-P1",
+      "password": "$2b$10$LkhitAo0vn/wSGE1etEow.xyUYQjxgW5vC63Mb/kh614sl1P21p82",
+      "name": "Karanpreet",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccccd5a83a4fe4515c6522"
+      }
+    },
+    {
+      "playerId": "Diggers in Paris-P2",
+      "password": "$2b$10$Bl5SDVqTX5BY3HXcHxoUJOIESu7Kmd8/3/IcfRbCUBz1UL.uzQiQi",
+      "name": "Vansh mittal",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccccd5a83a4fe4515c6523"
+      }
+    },
+    {
+      "playerId": "Diggers in Paris-P3",
+      "password": "$2b$10$HPd47n/npezxLzzPut016uRsMZYxJElpIPuxNNw.QAPn38iHStkaG",
+      "name": "Anshul Bhati",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccccd5a83a4fe4515c6524"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccd38a83a4fe4515c655f"
+  },
+  "teamId": "Balls",
+  "players": [
+    {
+      "playerId": "Balls-P1",
+      "password": "$2b$10$zL.QhHPt/6xUFW2WCfbOtOmD5/xQAew/gbwL8/xag5sLYpUjnvf1m",
+      "name": "Jyotirmoy ",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccd38a83a4fe4515c6560"
+      }
+    },
+    {
+      "playerId": "Balls-P2",
+      "password": "$2b$10$oIsHbkkenmS8nX7in4HSj.OHAM92Tb4xiaIhaaYiYRhb1TOaYHlfy",
+      "name": "Pranjal Jain",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccd38a83a4fe4515c6561"
+      }
+    },
+    {
+      "playerId": "Balls-P3",
+      "password": "$2b$10$H6fwkOtyN2GtxfsEPSYGHud9DDRum8oBRr5iEJ1EOk0H6dc1d58te",
+      "name": "Namish  Mahajan",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccd38a83a4fe4515c6562"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccd70a83a4fe4515c65a3"
+  },
+  "teamId": "Kitkat",
+  "players": [
+    {
+      "playerId": "Kitkat-P1",
+      "password": "$2b$10$tucOHrusnI/yFDPPIiKFi..UacJhOA9BSjG8nS2ke8RhR9oHLB4Li",
+      "name": "Avi Makkar",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccd70a83a4fe4515c65a4"
+      }
+    },
+    {
+      "playerId": "Kitkat-P2",
+      "password": "$2b$10$3y0Olt4Ob0ldacXU1xmeiO62JH1rR5N2YpY3V4RcMKxcy.0eEbNaq",
+      "name": "Chandni",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccd70a83a4fe4515c65a5"
+      }
+    },
+    {
+      "playerId": "Kitkat-P3",
+      "password": "$2b$10$7JDJnxcanwvJZF6nfOpide2SPkdK7zeb6JytBEDIaXl/XPuBoGRE6",
+      "name": "Ranbir",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccd70a83a4fe4515c65a6"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccdada83a4fe4515c65ed"
+  },
+  "teamId": "Bandits",
+  "players": [
+    {
+      "playerId": "Bandits-P1",
+      "password": "$2b$10$QfbSRo3juYIlNM2/YQm0H.WJRKYkzUKnjAWdVCCKhKmt3rE5lBEJ6",
+      "name": "Amritpal Singh",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccdada83a4fe4515c65ee"
+      }
+    },
+    {
+      "playerId": "Bandits-P2",
+      "password": "$2b$10$7vQNxKU8shgfv.TaR/Uzs.76RYXgSmt21ejoKBByz93GFKXSHBvMW",
+      "name": "Aseemjot singh",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccdada83a4fe4515c65ef"
+      }
+    },
+    {
+      "playerId": "Bandits-P3",
+      "password": "$2b$10$5G.sNKnp4NSOsSpAfNuD.ei1jZ/0Ia4cWqWv0Mt5dnp6vo7A/jPN.",
+      "name": "Goutam jain",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccdada83a4fe4515c65f0"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccdd5a83a4fe4515c663d"
+  },
+  "teamId": "Dalal Street",
+  "players": [
+    {
+      "playerId": "Dalal Street-P1",
+      "password": "$2b$10$GTL8JHGfZSxjd0MrTlgDf.r11OPM.H89CzKYZNXetuQV41gXVmRiy",
+      "name": "Yuvraj Dahiya",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccdd5a83a4fe4515c663e"
+      }
+    },
+    {
+      "playerId": "Dalal Street-P2",
+      "password": "$2b$10$cUwcLNmZbP4oel6I.xYzaOiD.teoJ9W/.zx0yea9/CUJKNpPrSvqO",
+      "name": "Arshit",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccdd5a83a4fe4515c663f"
+      }
+    },
+    {
+      "playerId": "Dalal Street-P3",
+      "password": "$2b$10$vojIrqsN/b7ammsHgTogsO4e1rB50typAjx5AFRj2bGA15YwpOrGO",
+      "name": "Gouransh",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccdd5a83a4fe4515c6640"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69ccce1da83a4fe4515c6693"
+  },
+  "teamId": "Assassins ",
+  "players": [
+    {
+      "playerId": "Assassins -P1",
+      "password": "$2b$10$zUK6HlTdGqovoa8LTuMXoe2q6ErvMbhOOrTQeNqSideGNUBAchYri",
+      "name": "Aditya Shukla",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce1da83a4fe4515c6694"
+      }
+    },
+    {
+      "playerId": "Assassins -P2",
+      "password": "$2b$10$rpcRSoulbfkHsNHT9zxfuu.CSwBIhbcC7jyHm/XgmPTxoKY82zXCS",
+      "name": "Aryan pandey",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce1da83a4fe4515c6695"
+      }
+    },
+    {
+      "playerId": "Assassins -P3",
+      "password": "$2b$10$QbD5uWSDwpvkCrR4i5de/OQuVtqV4C6taAhFM0qm6d2/M1aIFFZAG",
+      "name": "Aniruddha",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce1da83a4fe4515c6696"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69ccce3fa83a4fe4515c66ef"
+  },
+  "teamId": "Old Monk",
+  "players": [
+    {
+      "playerId": "Old Monk-P1",
+      "password": "$2b$10$kSElD/WbXhVCamjJWj.60udXIDJx2qmaYawcQVRHynahcw41/GbYK",
+      "name": "Jaivir",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce3fa83a4fe4515c66f0"
+      }
+    },
+    {
+      "playerId": "Old Monk-P2",
+      "password": "$2b$10$oODafCysh1Mj2fgzY4ulGO5ZFzdDLGcxg2BPXXPhYu8/QA6b2uUka",
+      "name": "Yash Malik",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce3fa83a4fe4515c66f1"
+      }
+    },
+    {
+      "playerId": "Old Monk-P3",
+      "password": "$2b$10$R3gspcgRtSzZFS7CR7PbhO/gcFBA2VzWzOTAp5.XMXEbXPY.ioCJ.",
+      "name": "Aastha",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce3fa83a4fe4515c66f2"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69ccce6ea83a4fe4515c6751"
+  },
+  "teamId": "Derabhussi",
+  "players": [
+    {
+      "playerId": "Derabhussi-P1",
+      "password": "$2b$10$za2.9sder1PhDeOzYel7.eekO1UAXIELwJp7TmGh045RRqkUK9H7C",
+      "name": "Aryan Thakkar",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce6ea83a4fe4515c6752"
+      }
+    },
+    {
+      "playerId": "Derabhussi-P2",
+      "password": "$2b$10$xEjDMAxiMiRsYo6FHSzwUOpgbu.W5JRjAlwyja6IDNjnUORCiFAJO",
+      "name": "Siddharth Chandra",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce6ea83a4fe4515c6753"
+      }
+    },
+    {
+      "playerId": "Derabhussi-P3",
+      "password": "$2b$10$1gsU.bFvryXEWVGIMFbTq.WYtjEwuxq/YtU1.N380R9K.gswmUr5a",
+      "name": "Yashit",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccce6ea83a4fe4515c6754"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccea6a83a4fe4515c67b9"
+  },
+  "teamId": "Tuckshop",
+  "players": [
+    {
+      "playerId": "Tuckshop-P1",
+      "password": "$2b$10$u0g.un0akv3ZsMc4FTP.peWnB020NU5wZM8zX1yix/2pTcazrHXnC",
+      "name": "Rudransh",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccea6a83a4fe4515c67ba"
+      }
+    },
+    {
+      "playerId": "Tuckshop-P2",
+      "password": "$2b$10$GmMuz92/3EFmSKWQO6Yu2.Snp5FAqXxwt3idqZZ1G1LGPyTBr4bum",
+      "name": "Kanishak",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccea6a83a4fe4515c67bb"
+      }
+    },
+    {
+      "playerId": "Tuckshop-P3",
+      "password": "$2b$10$Yq2TThFCKcM7YNPdWSawUu6pkGLlFsoivbeIwVBbqTgVHmXdQio7.",
+      "name": "Krishna Chaturvedi ",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccea6a83a4fe4515c67bc"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccedba83a4fe4515c6827"
+  },
+  "teamId": "Chole Bhature",
+  "players": [
+    {
+      "playerId": "Chole Bhature-P1",
+      "password": "$2b$10$3zK0YhflGWUo6YNcPLCBDeB3kCaHBwtluqzZamMhgVampepwxlBUS",
+      "name": "Parth Bhutna",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccedba83a4fe4515c6828"
+      }
+    },
+    {
+      "playerId": "Chole Bhature-P2",
+      "password": "$2b$10$8yWaLHKM6dapJ.itMv9p9OQqwsJHwS78HEgc8BI11vPFpK5w15r0W",
+      "name": "Pulkit Garg",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccedba83a4fe4515c6829"
+      }
+    },
+    {
+      "playerId": "Chole Bhature-P3",
+      "password": "$2b$10$AT4tVvOdiTjeuLTmWltwUu1kQcursgEUM6QNgOSkaq4UyHdN3OOvW",
+      "name": "Prabhjot Singh",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccedba83a4fe4515c682a"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccf06a83a4fe4515c689b"
+  },
+  "teamId": "A3 Dominators",
+  "players": [
+    {
+      "playerId": "A3 Dominators-P1",
+      "password": "$2b$10$x/L50KZWAsI3LNUEBnMzKe9TbhEUgpYI33AXnmsGf3qGBCwYy46SS",
+      "name": "Amish ",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccf06a83a4fe4515c689c"
+      }
+    },
+    {
+      "playerId": "A3 Dominators-P2",
+      "password": "$2b$10$mhUoF/EUFEd21n/EOtfPo.55yPNaDCB5UX.quoFA7gmVVeuvhUxtO",
+      "name": "Aakarsh",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccf06a83a4fe4515c689d"
+      }
+    },
+    {
+      "playerId": "A3 Dominators-P3",
+      "password": "$2b$10$11Y2GdROFB5BrJf6sLjTAuZZdoKKGLbsR.Y.lWSTH3y4YRBRTNH4a",
+      "name": "Aryan",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccf06a83a4fe4515c689e"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69cccf48a83a4fe4515c6915"
+  },
+  "teamId": "PregnantHuMatKar",
+  "players": [
+    {
+      "playerId": "PregnantHuMatKar-P1",
+      "password": "$2b$10$3d1xAQ00qmGHHE6EHufRvOg.PJeP9yC6hasi25AvgzCYN.b47pw4m",
+      "name": "Aarush Sareen",
+      "email": "",
+      "phone": "",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccf48a83a4fe4515c6916"
+      }
+    },
+    {
+      "playerId": "PregnantHuMatKar-P2",
+      "password": "$2b$10$Agff7X788H46RVVnVeIhi.aCsYU6aSl9g0T8JyPJQopbsBbDg9lmK",
+      "name": "Nipun",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccf48a83a4fe4515c6917"
+      }
+    },
+    {
+      "playerId": "PregnantHuMatKar-P3",
+      "password": "$2b$10$D/0C0vF0gFbsSSnAyliKTuDibJUJmpc4hFheEmoSjgrv8UyqpFR9G",
+      "name": "Agrim Bhatt",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69cccf48a83a4fe4515c6918"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69ccd6f991fd31507f15430a"
+  },
+  "teamId": "The Dynamic Duo",
+  "players": [
+    {
+      "playerId": "The Dynamic Duo-P1",
+      "password": "$2b$10$oOP/9nmzgK3O5tRGL6nIu.z1K.1zlbEBpdbgXjlqk6Yk4dxFKED7a",
+      "name": "shreyansh",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccd6f991fd31507f15430b"
+      }
+    },
+    {
+      "playerId": "The Dynamic Duo-P2",
+      "password": "$2b$10$ozKipV3w7lvJY19l7h2lxuQk3Q/bQaznjqxoGLo0WdVFmNLKx0L/.",
+      "name": "anusha",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccd6f991fd31507f15430c"
+      }
+    },
+    {
+      "playerId": "The Dynamic Duo-P3",
+      "password": "$2b$10$JQeJ1/Gu.qjYzMSbNP2bReJzZCN1OxGMi7dkahNbR4B/mOZ/1RiNS",
+      "name": "",
+      "email": "",
+      "phone": "",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccd6f991fd31507f15430d"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69ccd76991fd31507f154390"
+  },
+  "teamId": "AmongusBois",
+  "players": [
+    {
+      "playerId": "AmongusBois-P1",
+      "password": "$2b$10$VNCwxVYzeyvLlscNtFrFY.Js7FR3s4orNzdSohZZOACS4H.Zqd61u",
+      "name": "Yuvraj",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccd76991fd31507f154391"
+      }
+    },
+    {
+      "playerId": "AmongusBois-P2",
+      "password": "$2b$10$XPwJnNU2m5CJnwevlVyRkuDWArfgUhCVHncoRRlOTW1T8NDwOktQi",
+      "name": "Mayun",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccd76991fd31507f154392"
+      }
+    },
+    {
+      "playerId": "AmongusBois-P3",
+      "password": "$2b$10$HHHlbVy4ExnNnFDb8c.h.uVaCDdsecDkMxXkWca.CIBnJuY5fRaSO",
+      "name": "Harshal",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccd76991fd31507f154393"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69ccea341fc7c81b57bb232d"
+  },
+  "teamId": "OsamaBinLaden",
+  "players": [
+    {
+      "playerId": "OsamaBinLaden-P1",
+      "password": "$2b$10$AnryHELx5Zab44n9oOFSfuDe9xjp3t2uhKz.NuaFZL7.YlF66U05C",
+      "name": "Akshit kumar puri",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Leader",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccea341fc7c81b57bb232e"
+      }
+    },
+    {
+      "playerId": "OsamaBinLaden-P2",
+      "password": "$2b$10$mvLwALIOIWKzGyh4Yw5yFeoUGBAn3U9g.z1FU7lfdKeznXgKi.A6S",
+      "name": "Arman Singh lubana",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccea341fc7c81b57bb232f"
+      }
+    },
+    {
+      "playerId": "OsamaBinLaden-P3",
+      "password": "$2b$10$OF7nphIfnjMq0J4BrhjmFOOk1UhS5eDUM55VwTBcv9MSL5C2T4/G2",
+      "name": "Agrim Gupta",
+      "email": "@gmail.com",
+      "phone": ".",
+      "role": "Member",
+      "points": 0,
+      "_id": {
+        "$oid": "69ccea341fc7c81b57bb2330"
+      }
+    }
+  ],
+  "score": 0,
+  "__v": 0
+}]
