@@ -90,6 +90,14 @@ async def validate_request(request: Request, call_next):
                 {"request": request, "message": "Invalid or expired session"},
                 status_code=401
             )
+    elif path == "/players" or path.startswith("/table/"):
+        status = await db.validate(session_token=session_token, role="minigamemanager")
+        if not status:
+            return pages.TemplateResponse(
+                "error.html",
+                {"request": request, "message": "Invalid or expired session"},
+                status_code=401
+            )
 
     request.state.session_token = session_token
     try:
@@ -220,8 +228,10 @@ async def login_post(creds: login, request: Request):
         access = await db.getAccess(session_token)
         if access == 'player':
             redirect = RedirectResponse(url="/home", status_code=303)
-        else:
+        elif access == 'manager':
             redirect = RedirectResponse(url="/tables", status_code=303)
+        else:
+            redirect = RedirectResponse(url="/players", status_code=303)
         redirect.set_cookie(
             key="session_token",
             value=str(session_token),
@@ -346,23 +356,25 @@ async def getPlayers(request: Request):
     try:
         players = await db.getAllPlayers()
     except DbError as e:
-        error_response(request,e.message)
+        return error_response(request,e.message)
     return JSONResponse(players)
 
 
 #-------------------- POST endpoint for minigame manager --------------#
 
 @app.post("/player/{username}/deduct")
-async def deduct(request: Request, amount: str):
+async def deduct(request: Request, username: str, amount: str):
     try:
-        status = db.deductFromUser(username = username, amount = amount)
+        status = await db.deductFromUser(username = username, amount = amount)
     except TransactionError as e:
-        error_response(request, e.message)
+        return error_response(request, e.message)
+    return JSONResponse(status)
 
 @app.post("/player/{username}/add")
-async def add(request: Request, amount: str):
+async def add(request: Request, username: str, amount: str):
     try:
-        status = db.addToUser(username = username, amount= amount)
+        status = await db.addToUser(username = username, amount= amount)
     except TransactionError as e:
-        error_response(request, e.message)
+        return error_response(request, e.message)
+    return JSONResponse(status)
     
