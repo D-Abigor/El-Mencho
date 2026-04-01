@@ -16,7 +16,7 @@ body {
 
 .page-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 36px;
   animation: fadeUp 0.4s ease both;
 }
 
@@ -50,6 +50,29 @@ body {
   animation: fadeUp 0.5s ease 0.1s both;
 }
 
+.search-bar {
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 3px;
+  padding: 11px 16px;
+  color: var(--cream, #f5f0e8);
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-bar::placeholder {
+  color: rgba(138,128,112,0.5);
+}
+
+.search-bar:focus {
+  border-color: rgba(201,168,76,0.45);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.07);
+}
+
 .players-table {
   width: 100%;
   border-collapse: collapse;
@@ -75,10 +98,6 @@ body {
   text-align: left;
 }
 
-.players-table th.col-actions {
-  text-align: right;
-}
-
 .players-table td {
   padding: 14px 24px;
   color: var(--cream, #f5f0e8);
@@ -93,10 +112,11 @@ body {
 
 .players-table tbody tr {
   transition: background 0.15s ease;
+  cursor: pointer;
 }
 
 .players-table tbody tr:hover {
-  background: rgba(201,168,76,0.05);
+  background: rgba(201,168,76,0.06);
 }
 
 .player-index {
@@ -122,58 +142,20 @@ body {
   vertical-align: middle;
 }
 
-.row-actions {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.btn-add {
-  display: inline-block;
-  padding: 5px 14px;
-  font-family: 'Cinzel', serif;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: 3px;
-  margin-left: 8px;
-  transition: background 0.15s, border-color 0.15s;
-  background: rgba(201,168,76,0.1);
-  border: 1px solid rgba(201,168,76,0.35);
-  color: var(--gold, #c9a84c);
-}
-
-.btn-add:hover {
-  background: rgba(201,168,76,0.22);
-  border-color: rgba(201,168,76,0.65);
-}
-
-.btn-deduct {
-  display: inline-block;
-  padding: 5px 14px;
-  font-family: 'Cinzel', serif;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: 3px;
-  margin-left: 8px;
-  transition: background 0.15s, border-color 0.15s;
-  background: rgba(139,26,26,0.2);
-  border: 1px solid rgba(192,57,43,0.35);
-  color: #c0392b;
-}
-
-.btn-deduct:hover {
-  background: rgba(192,57,43,0.3);
-  border-color: rgba(192,57,43,0.65);
-}
-
 .empty-state {
   text-align: center;
   padding: 60px 24px;
   color: var(--muted, #8a8070);
   font-style: italic;
+}
+
+.no-results {
+  display: none;
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--muted, #8a8070);
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
 .actions {
@@ -199,37 +181,62 @@ body {
 </div>
 
 <div class="players-wrap">
+  <input
+    class="search-bar"
+    id="search"
+    type="text"
+    placeholder="Search players…"
+    oninput="filterPlayers()"
+    autocomplete="off"
+  />
+
   <table class="players-table">
     <thead>
       <tr>
         <th>#</th>
         <th>Username</th>
-        <th class="col-actions">Actions</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="playerBody">
       {% for player in players %}
-      <tr>
+      <tr onclick="window.location='/player/{{ player }}'">
         <td class="player-index">{{ loop.index }}</td>
         <td class="player-name"><span class="player-pip"></span>{{ player }}</td>
-        <td class="row-actions">
-          <a href="/player/{{ player }}/add" class="btn-add">+ Add</a>
-          <a href="/player/{{ player }}/deduct" class="btn-deduct">− Deduct</a>
-        </td>
       </tr>
       {% else %}
       <tr>
-        <td colspan="3" class="empty-state">No players at the table.</td>
+        <td colspan="2" class="empty-state">No players at the table.</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+
+  <p class="no-results" id="noResults">No players match your search.</p>
 </div>
 
 <div class="actions">
   <a href="/home" class="btn btn-gold">Dashboard</a>
   <a href="/" class="btn btn-outline">Lobby</a>
 </div>
+
+<script>
+  function filterPlayers() {
+    const query = document.getElementById('search').value.toLowerCase();
+    const rows = document.querySelectorAll('#playerBody tr');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const name = row.querySelector('.player-name');
+      if (!name) return; // empty state row
+      const match = name.textContent.toLowerCase().includes(query);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    document.getElementById('noResults').style.display =
+      visible === 0 && query !== '' ? 'block' : 'none';
+  }
+</script>
 
 </body>
 </html>

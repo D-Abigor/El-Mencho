@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ username }} — The House</title>
+<link rel="stylesheet" href="/static/base.css">
+<style>
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.profile-wrap {
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  animation: fadeUp 0.5s ease both;
+}
+
+.profile-suit {
+  font-size: 3rem;
+  color: var(--gold, #c9a84c);
+  opacity: 0.6;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.profile-username {
+  font-family: 'Cinzel', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cream, #f5f0e8);
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+.profile-label {
+  font-size: 0.78rem;
+  color: var(--muted, #8a8070);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.btn-add {
+  flex: 1;
+  text-align: center;
+  padding: 13px 20px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 3px;
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.4);
+  color: var(--gold, #c9a84c);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-add:hover {
+  background: rgba(201,168,76,0.24);
+  border-color: rgba(201,168,76,0.7);
+}
+
+.btn-deduct {
+  flex: 1;
+  text-align: center;
+  padding: 13px 20px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 3px;
+  background: rgba(139,26,26,0.2);
+  border: 1px solid rgba(192,57,43,0.4);
+  color: #c0392b;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-deduct:hover {
+  background: rgba(192,57,43,0.3);
+  border-color: rgba(192,57,43,0.7);
+}
+
+.back-link {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted, #8a8070);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--cream, #f5f0e8);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div class="profile-wrap">
+  <span class="profile-suit">♣</span>
+  <h1 class="profile-username">{{ username }}</h1>
+  <p class="profile-label">Player</p>
+
+  <div class="profile-actions">
+    <a href="/player/{{ username }}/add" class="btn-add">+ Add Funds</a>
+    <a href="/player/{{ username }}/deduct" class="btn-deduct">− Deduct</a>
+  </div>
+
+  <a href="/players" class="back-link">← Back to Players</a>
+</div>
+
+</body>
+</html>
