@@ -786,7 +786,7 @@ async def deductFromUser(username,amount):
         UPDATE accounts SET balance = balance - $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2 RETURNING users.id;""", amount, username)
         await conn.execute("""
         INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);
-        """, amount, sourceid, '91b0e16f-5e8e-42c6-b0bf-4030981aa035' )
+        """, amount, sourceid, _parse_uuid('91b0e16f-5e8e-42c6-b0bf-4030981aa035'))
         if status.endswith("1"):
             return {"status": "ok"}
         else:
@@ -798,7 +798,7 @@ async def addToUser(username, amount):
         UPDATE accounts SET balance = balance + $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2 RETURNING users.id;""", amount, username)
         await conn.execute("""
         INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);
-        """, amount,'91b0e16f-5e8e-42c6-b0bf-4030981aa035', destid )
+        """, amount,_parse_uuid('91b0e16f-5e8e-42c6-b0bf-4030981aa035'), destid )
         if status.endswith("1"):
             return {"status": "ok"}
         else:
