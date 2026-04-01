@@ -532,11 +532,11 @@ UPDATE queue q
 SET readytojoin = TRUE
 WHERE q.number IN (
     SELECT q2.number
-    FROM queue q2 FULL OUTER JOIN activeplayers ap, slots
+    FROM queue q2
     WHERE q2.tableid = $1
       AND q2.readytojoin = FALSE
       AND NOT EXISTS (
-      SELECT 1 FROM ap WHERE q2.userid = ap.userid
+      SELECT 1 FROM activeplayers ap WHERE q2.userid = ap.userid
       )
     ORDER BY q2.timeofjoin ASC
     LIMIT (SELECT available FROM slots)  -- must be a subquery, not a column ref
