@@ -373,7 +373,7 @@ async def playerProfile(request: Request, username: str):
 async def getDeductPage(request: Request, username: str, amount: str):
     return pages.TemplateResponse("deduct.html", {"request": request})
 
-@app.get("/player/{username}/deduct")
+@app.get("/player/{username}/add")
 async def getAddPage(request: Request, username: str, amount: str):
     return pages.TemplateResponse("add.html", {"request": request})
 
