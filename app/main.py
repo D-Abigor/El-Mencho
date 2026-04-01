@@ -370,11 +370,11 @@ async def playerProfile(request: Request, username: str):
     )
  
 @app.get("/player/{username}/deduct")
-async def getDeductPage(request: Request, username: str, amount: str):
+async def getDeductPage(request: Request, username: str):
     return pages.TemplateResponse("deduct.html", {"request": request})
 
 @app.get("/player/{username}/add")
-async def getAddPage(request: Request, username: str, amount: str):
+async def getAddPage(request: Request, username: str):
     return pages.TemplateResponse("add.html", {"request": request})
 
 #-------------------- POST endpoint for minigame manager --------------#
