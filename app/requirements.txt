@@ -6,3 +6,4 @@ asyncpg
 passlib[bcrypt]
 bcrypt==4.0.1
 python-multipart
+psycopg2-binary
