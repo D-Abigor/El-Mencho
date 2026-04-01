@@ -783,10 +783,10 @@ async def getAllPlayers():
 async def deductFromUser(username,amount):
     async with conn_pool.acquire() as conn:
         sourceid = await conn.execute("""
-        UPDATE accounts SET balance = balance - $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2 RETURNING users.id;""", amount, username)
+        UPDATE accounts SET balance = balance - $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2 RETURNING users.id AS id;""", amount, username)
         await conn.execute("""
         INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);
-        """, amount, sourceid, _parse_uuid('91b0e16f-5e8e-42c6-b0bf-4030981aa035'))
+        """, amount, sourceid["id"], _parse_uuid('91b0e16f-5e8e-42c6-b0bf-4030981aa035'))
         if status.endswith("1"):
             return {"status": "ok"}
         else:
@@ -795,10 +795,10 @@ async def deductFromUser(username,amount):
 async def addToUser(username, amount):
     async with conn_pool.acquire() as conn:
         destid = await conn.execute("""
-        UPDATE accounts SET balance = balance + $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2 RETURNING users.id;""", amount, username)
+        UPDATE accounts SET balance = balance + $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2 RETURNING users.id AS id;""", amount, username)
         await conn.execute("""
         INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);
-        """, amount,_parse_uuid('91b0e16f-5e8e-42c6-b0bf-4030981aa035'), destid )
+        """, amount,_parse_uuid('91b0e16f-5e8e-42c6-b0bf-4030981aa035'), destid["id"] )
         if status.endswith("1"):
             return {"status": "ok"}
         else:
