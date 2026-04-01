@@ -782,7 +782,7 @@ async def getAllPlayers():
 
 async def deductFromUser(username,amount):
     async with conn_pool.acquire() as conn:
-        sourceid = await conn.execute("""
+        sourceid = await conn.fetchrow("""
         UPDATE accounts SET balance = balance - $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2 RETURNING users.id AS id;""", amount, username)
         await conn.execute("""
         INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);
@@ -794,7 +794,7 @@ async def deductFromUser(username,amount):
 
 async def addToUser(username, amount):
     async with conn_pool.acquire() as conn:
-        destid = await conn.execute("""
+        destid = await conn.fetchrow("""
         UPDATE accounts SET balance = balance + $1 FROM users WHERE users.id = accounts.user_id AND users.username = $2 RETURNING users.id AS id;""", amount, username)
         await conn.execute("""
         INSERT INTO transactions (change, source, destination) VALUES ($1, $2, $3);
