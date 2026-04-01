@@ -156,7 +156,7 @@ async def error_page(request: Request, message: str = "An error occurred."):
 async def get_user_landing(request: Request):
     session_token = request.state.session_token
     response = await db.getPlayerHome(session_token=session_token)
-    print(response)
+    print("response", response)
     return pages.TemplateResponse(
         "userhome.html",
         {
