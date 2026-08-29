@@ -93,7 +93,7 @@ async def validate_request(request: Request, call_next):
                 {"request": request, "message": "Invalid or expired session"},
                 status_code=401
             )
-    elif path == "/players" or path.startswith("/table/"):
+    elif path == "/players" or path.startswith("/table/") or path.startswith("/player"):
         status = await db.validate(session_token=session_token, role="minigamemanager")
         if not status:
             return pages.TemplateResponse(
