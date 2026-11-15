@@ -17,7 +17,7 @@ Now that the event is over, this repository is preserved as an archive of that c
 
 ```
                   ┌──────────────┐
-   HTTPS ──▶     │    NGINX     │     Reverse proxy
+   HTTPS ──▶      │    NGINX     │     Reverse proxy
                   └──────┬───────┘
                          │
                   ┌──────▼───────┐
